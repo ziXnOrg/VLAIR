@@ -1,0 +1,16 @@
+﻿---
+description: Testing and benchmarking standards
+globs: ["**/*"]
+alwaysApply: true
+---
+
+- Tests-first:
+  - RED->GREEN->REFACTOR; deterministic seeds; failure-path tests mandatory
+  - Unit, integration, property-based where applicable
+
+- Benchmarks:
+  - Micro-bench hot paths (context retrieval, scheduling)
+  - Regressions <= 5% for key metrics; document SLOs and environment
+
+
+

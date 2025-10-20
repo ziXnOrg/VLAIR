@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/croaring-subbuild/CMakeFiles/croaring-populate"
+		},
+		{
+			"file" : "C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/croaring-subbuild/CMakeFiles/3189388ac1ef435a4f2919f0c663549c/croaring-populate.rule"
+		},
+		{
+			"file" : "C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/croaring-subbuild/CMakeFiles/4c8059a0ac02dc53da23a372dac97a50/croaring-populate-complete.rule"
+		},
+		{
+			"file" : "C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/croaring-subbuild/CMakeFiles/dcfd2fa58551cb513799d760fccc1f80/croaring-populate-build.rule"
+		},
+		{
+			"file" : "C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/croaring-subbuild/CMakeFiles/dcfd2fa58551cb513799d760fccc1f80/croaring-populate-configure.rule"
+		},
+		{
+			"file" : "C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/croaring-subbuild/CMakeFiles/dcfd2fa58551cb513799d760fccc1f80/croaring-populate-download.rule"
+		},
+		{
+			"file" : "C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/croaring-subbuild/CMakeFiles/dcfd2fa58551cb513799d760fccc1f80/croaring-populate-install.rule"
+		},
+		{
+			"file" : "C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/croaring-subbuild/CMakeFiles/dcfd2fa58551cb513799d760fccc1f80/croaring-populate-mkdir.rule"
+		},
+		{
+			"file" : "C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/croaring-subbuild/CMakeFiles/dcfd2fa58551cb513799d760fccc1f80/croaring-populate-patch.rule"
+		},
+		{
+			"file" : "C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/croaring-subbuild/CMakeFiles/dcfd2fa58551cb513799d760fccc1f80/croaring-populate-test.rule"
+		},
+		{
+			"file" : "C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/croaring-subbuild/CMakeFiles/dcfd2fa58551cb513799d760fccc1f80/croaring-populate-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"croaring-populate"
+		],
+		"name" : "croaring-populate"
+	}
+}

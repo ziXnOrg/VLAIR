@@ -1,0 +1,10 @@
+^C:\USERS\CISCO\DESKTOP\DEV\RESEARCH\VLTAIR\BUILD\_DEPS\PYBIND11_PROJ-SUBBUILD\CMAKEFILES\3F8BFA5FA4BF05F75E1371926B50CD7C\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/pybind11_proj-subbuild -BC:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/pybind11_proj-subbuild --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/pybind11_proj-subbuild/pybind11_proj-populate.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

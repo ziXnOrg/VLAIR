@@ -1,0 +1,5 @@
+add_test( [==[IVF-PQ Diagnostic: PQ Codebook Quality]==] C:/Users/cisco/Desktop/dev/research/VLTAIR/build/Vesper/Release/ivfpq_diagnostic_test.exe [==[IVF-PQ Diagnostic: PQ Codebook Quality]==]  )
+set_tests_properties( [==[IVF-PQ Diagnostic: PQ Codebook Quality]==] PROPERTIES WORKING_DIRECTORY C:/Users/cisco/Desktop/dev/research/VLTAIR/build/Vesper)
+add_test( [==[IVF-PQ Diagnostic: Zero Vector Handling]==] C:/Users/cisco/Desktop/dev/research/VLTAIR/build/Vesper/Release/ivfpq_diagnostic_test.exe [==[IVF-PQ Diagnostic: Zero Vector Handling]==]  )
+set_tests_properties( [==[IVF-PQ Diagnostic: Zero Vector Handling]==] PROPERTIES WORKING_DIRECTORY C:/Users/cisco/Desktop/dev/research/VLTAIR/build/Vesper)
+set( ivfpq_diagnostic_test_TESTS [==[IVF-PQ Diagnostic: PQ Codebook Quality]==] [==[IVF-PQ Diagnostic: Zero Vector Handling]==])

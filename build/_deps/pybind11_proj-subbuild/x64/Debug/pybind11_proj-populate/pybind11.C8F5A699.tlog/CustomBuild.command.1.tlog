@@ -1,0 +1,150 @@
+^C:\USERS\CISCO\DESKTOP\DEV\RESEARCH\VLTAIR\BUILD\_DEPS\PYBIND11_PROJ-SUBBUILD\CMAKEFILES\4D5FA367B45907C7E7352162855BAD79\PYBIND11_PROJ-POPULATE-MKDIR.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -Dcfgdir=/Debug -P C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/pybind11_proj-subbuild/pybind11_proj-populate-prefix/tmp/pybind11_proj-populate-mkdirs.cmake
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/pybind11_proj-subbuild/pybind11_proj-populate-prefix/src/pybind11_proj-populate-stamp/Debug/pybind11_proj-populate-mkdir
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\CISCO\DESKTOP\DEV\RESEARCH\VLTAIR\BUILD\_DEPS\PYBIND11_PROJ-SUBBUILD\CMAKEFILES\4D5FA367B45907C7E7352162855BAD79\PYBIND11_PROJ-POPULATE-DOWNLOAD.RULE
+setlocal
+cd C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/pybind11_proj-subbuild/pybind11_proj-populate-prefix/tmp/pybind11_proj-populate-gitclone.cmake
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/pybind11_proj-subbuild/pybind11_proj-populate-prefix/src/pybind11_proj-populate-stamp/Debug/pybind11_proj-populate-download
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\CISCO\DESKTOP\DEV\RESEARCH\VLTAIR\BUILD\_DEPS\PYBIND11_PROJ-SUBBUILD\CMAKEFILES\4D5FA367B45907C7E7352162855BAD79\PYBIND11_PROJ-POPULATE-UPDATE.RULE
+setlocal
+cd C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\pybind11_proj-src
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -Dcan_fetch=YES -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/pybind11_proj-subbuild/pybind11_proj-populate-prefix/tmp/pybind11_proj-populate-gitupdate.cmake
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\CISCO\DESKTOP\DEV\RESEARCH\VLTAIR\BUILD\_DEPS\PYBIND11_PROJ-SUBBUILD\CMAKEFILES\4D5FA367B45907C7E7352162855BAD79\PYBIND11_PROJ-POPULATE-PATCH.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/pybind11_proj-subbuild/pybind11_proj-populate-prefix/src/pybind11_proj-populate-stamp/Debug/pybind11_proj-populate-patch
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\CISCO\DESKTOP\DEV\RESEARCH\VLTAIR\BUILD\_DEPS\PYBIND11_PROJ-SUBBUILD\CMAKEFILES\4D5FA367B45907C7E7352162855BAD79\PYBIND11_PROJ-POPULATE-CONFIGURE.RULE
+setlocal
+cd C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\pybind11_proj-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/pybind11_proj-subbuild/pybind11_proj-populate-prefix/src/pybind11_proj-populate-stamp/Debug/pybind11_proj-populate-configure
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\CISCO\DESKTOP\DEV\RESEARCH\VLTAIR\BUILD\_DEPS\PYBIND11_PROJ-SUBBUILD\CMAKEFILES\4D5FA367B45907C7E7352162855BAD79\PYBIND11_PROJ-POPULATE-BUILD.RULE
+setlocal
+cd C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\pybind11_proj-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/pybind11_proj-subbuild/pybind11_proj-populate-prefix/src/pybind11_proj-populate-stamp/Debug/pybind11_proj-populate-build
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\CISCO\DESKTOP\DEV\RESEARCH\VLTAIR\BUILD\_DEPS\PYBIND11_PROJ-SUBBUILD\CMAKEFILES\4D5FA367B45907C7E7352162855BAD79\PYBIND11_PROJ-POPULATE-INSTALL.RULE
+setlocal
+cd C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\pybind11_proj-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/pybind11_proj-subbuild/pybind11_proj-populate-prefix/src/pybind11_proj-populate-stamp/Debug/pybind11_proj-populate-install
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\CISCO\DESKTOP\DEV\RESEARCH\VLTAIR\BUILD\_DEPS\PYBIND11_PROJ-SUBBUILD\CMAKEFILES\4D5FA367B45907C7E7352162855BAD79\PYBIND11_PROJ-POPULATE-TEST.RULE
+setlocal
+cd C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\pybind11_proj-build
+if %errorlevel% neq 0 goto :cmEnd
+C:
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E echo_append
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/pybind11_proj-subbuild/pybind11_proj-populate-prefix/src/pybind11_proj-populate-stamp/Debug/pybind11_proj-populate-test
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\CISCO\DESKTOP\DEV\RESEARCH\VLTAIR\BUILD\_DEPS\PYBIND11_PROJ-SUBBUILD\CMAKEFILES\23A6311F15DC3C049250D46F906FF37E\PYBIND11_PROJ-POPULATE-COMPLETE.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -E make_directory C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/pybind11_proj-subbuild/CMakeFiles/Debug
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/pybind11_proj-subbuild/CMakeFiles/Debug/pybind11_proj-populate-complete
+if %errorlevel% neq 0 goto :cmEnd
+"C:\Program Files\CMake\bin\cmake.exe" -E touch C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/pybind11_proj-subbuild/pybind11_proj-populate-prefix/src/pybind11_proj-populate-stamp/Debug/pybind11_proj-populate-done
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\CISCO\DESKTOP\DEV\RESEARCH\VLTAIR\BUILD\_DEPS\PYBIND11_PROJ-SUBBUILD\CMAKEFILES\3F8BFA5FA4BF05F75E1371926B50CD7C\PYBIND11_PROJ-POPULATE.RULE
+setlocal
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
+^C:\USERS\CISCO\DESKTOP\DEV\RESEARCH\VLTAIR\BUILD\_DEPS\PYBIND11_PROJ-SUBBUILD\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/pybind11_proj-subbuild -BC:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/pybind11_proj-subbuild --check-stamp-file C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/pybind11_proj-subbuild/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

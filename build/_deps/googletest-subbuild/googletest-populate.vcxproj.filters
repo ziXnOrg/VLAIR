@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\googletest-subbuild\CMakeFiles\a90f361ce984ecaf47da58e5bd0f71df\googletest-populate-mkdir.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\googletest-subbuild\CMakeFiles\a90f361ce984ecaf47da58e5bd0f71df\googletest-populate-download.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\googletest-subbuild\CMakeFiles\a90f361ce984ecaf47da58e5bd0f71df\googletest-populate-update.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\googletest-subbuild\CMakeFiles\a90f361ce984ecaf47da58e5bd0f71df\googletest-populate-patch.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\googletest-subbuild\CMakeFiles\a90f361ce984ecaf47da58e5bd0f71df\googletest-populate-configure.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\googletest-subbuild\CMakeFiles\a90f361ce984ecaf47da58e5bd0f71df\googletest-populate-build.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\googletest-subbuild\CMakeFiles\a90f361ce984ecaf47da58e5bd0f71df\googletest-populate-install.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\googletest-subbuild\CMakeFiles\a90f361ce984ecaf47da58e5bd0f71df\googletest-populate-test.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\googletest-subbuild\CMakeFiles\d809b952cfa3e98a5ee91f4de4c73d64\googletest-populate-complete.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\googletest-subbuild\CMakeFiles\b1ae00692fbef9ffa52fdac0618a4014\googletest-populate.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\googletest-subbuild\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\googletest-subbuild\CMakeFiles\googletest-populate" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{4B008B07-9471-341D-BA0D-E7B4040C32CC}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\src\wal\frame.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\src\wal\io.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\src\wal\manifest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\src\wal\snapshot.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\src\wal\retention.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\src\wal\replay.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\src\wal\checkpoint.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{0864FB8A-B438-3373-82FF-3F284A4872B0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

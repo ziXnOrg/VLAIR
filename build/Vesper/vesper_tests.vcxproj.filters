@@ -1,0 +1,193 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\support\manifest_test_helpers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\support\wal_replay_helpers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\bm25_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\capq_avx2_parity_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\capq_basic_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\cosine_kernels_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\distance_kernels_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\error_codes_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\filter_eval_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\fusion_algorithms_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\headers_compile_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\hybrid_searcher_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\inmemory_search_dispatch_equivalence_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\inmemory_search_filter_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\inmemory_search_metric_cosine_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\ivfpq_defaults_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\kernels_backend_auto_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\kernels_backend_select_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\kernels_batch_topk_l2_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\kernels_dispatch_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\kernels_topk_materialized_ties_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\kernels_topk_ties_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\manifest_test_helpers_unit_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\open_collection_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\projection_assigner_tail_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\projection_stability_smoke_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\recovery_harness_snapshot_hooks_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\safe_getenv_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\simd_kernels_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\test_io_uring.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\test_numa_allocator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\wal_delivery_limits_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\wal_frame_padding_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\wal_frame_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\wal_io_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\wal_manifest_firstlsn_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\wal_manifest_rebuild_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\wal_manifest_roundtrip_edges_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\wal_manifest_stale_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\wal_manifest_sync_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\wal_manifest_validate_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\wal_nonmonotonic_cross_rotation_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\wal_property_replay_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\wal_purge_boundaries_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\wal_purge_manifest_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\wal_recover_scan_errors_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\wal_recover_scan_perf_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\wal_replay_checkpoint_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\wal_replay_e2e_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\wal_replay_retention_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\wal_replay_toy_index_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\wal_replay_type_mask_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\wal_retention_bytes_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\wal_retention_keep_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\wal_rotation_manifest_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\wal_snapshot_atomic_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\wal_snapshot_manifest_interplay_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\wal_snapshot_manifest_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\wal_writer_durability_profile_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\unit\wal_writer_fsync_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{0864FB8A-B438-3373-82FF-3F284A4872B0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

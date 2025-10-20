@@ -1,0 +1,5 @@
+if(EXISTS "C:/Users/cisco/Desktop/dev/research/VLTAIR/build/Vesper/simd_kernels_test[1]_tests.cmake")
+  include("C:/Users/cisco/Desktop/dev/research/VLTAIR/build/Vesper/simd_kernels_test[1]_tests.cmake")
+else()
+  add_test(simd_kernels_test_NOT_BUILT simd_kernels_test_NOT_BUILT)
+endif()

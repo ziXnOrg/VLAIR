@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\gbench-subbuild\CMakeFiles\bf1f7b6fbeabe25f63a0516a95e82e13\gbench-populate-mkdir.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\gbench-subbuild\CMakeFiles\bf1f7b6fbeabe25f63a0516a95e82e13\gbench-populate-download.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\gbench-subbuild\CMakeFiles\bf1f7b6fbeabe25f63a0516a95e82e13\gbench-populate-update.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\gbench-subbuild\CMakeFiles\bf1f7b6fbeabe25f63a0516a95e82e13\gbench-populate-patch.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\gbench-subbuild\CMakeFiles\bf1f7b6fbeabe25f63a0516a95e82e13\gbench-populate-configure.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\gbench-subbuild\CMakeFiles\bf1f7b6fbeabe25f63a0516a95e82e13\gbench-populate-build.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\gbench-subbuild\CMakeFiles\bf1f7b6fbeabe25f63a0516a95e82e13\gbench-populate-install.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\gbench-subbuild\CMakeFiles\bf1f7b6fbeabe25f63a0516a95e82e13\gbench-populate-test.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\gbench-subbuild\CMakeFiles\c65d2aa5264a0d97d04e0a1434f9f8ea\gbench-populate-complete.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\gbench-subbuild\CMakeFiles\4bfbf2c51c736cf761774102afcccc35\gbench-populate.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\gbench-subbuild\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\gbench-subbuild\CMakeFiles\gbench-populate" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{C13C1591-7A94-33C9-B644-D180F0177D5C}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

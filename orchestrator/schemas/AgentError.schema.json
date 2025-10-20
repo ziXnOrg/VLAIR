@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AgentError",
+  "type": "object",
+  "properties": {
+    "type": { "const": "AgentError" },
+    "id": { "type": "string" },
+    "parentId": { "type": "string" },
+    "agent": { "type": "string" },
+    "error": {
+      "type": "object",
+      "properties": {
+        "code": { "type": "string" },
+        "message": { "type": "string" },
+        "details": { "type": "string" }
+      },
+      "required": ["code", "message"],
+      "additionalProperties": true
+    },
+    "protocolVersion": { "type": "number", "default": 1 }
+  },
+  "required": ["type", "id", "parentId", "agent", "error"],
+  "additionalProperties": true
+}

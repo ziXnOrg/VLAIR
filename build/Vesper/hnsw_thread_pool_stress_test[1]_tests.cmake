@@ -1,0 +1,5 @@
+add_test([=[ThreadPoolStress.ChurnAndWaitAll]=]  C:/Users/cisco/Desktop/dev/research/VLTAIR/build/Vesper/Release/hnsw_thread_pool_stress_test.exe [==[--gtest_filter=ThreadPoolStress.ChurnAndWaitAll]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[ThreadPoolStress.ChurnAndWaitAll]=]  PROPERTIES WORKING_DIRECTORY C:/Users/cisco/Desktop/dev/research/VLTAIR/build/Vesper SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test([=[ThreadPoolStress.ManyFuturesMix]=]  C:/Users/cisco/Desktop/dev/research/VLTAIR/build/Vesper/Release/hnsw_thread_pool_stress_test.exe [==[--gtest_filter=ThreadPoolStress.ManyFuturesMix]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[ThreadPoolStress.ManyFuturesMix]=]  PROPERTIES WORKING_DIRECTORY C:/Users/cisco/Desktop/dev/research/VLTAIR/build/Vesper SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set(  hnsw_thread_pool_stress_test_TESTS ThreadPoolStress.ChurnAndWaitAll ThreadPoolStress.ManyFuturesMix)

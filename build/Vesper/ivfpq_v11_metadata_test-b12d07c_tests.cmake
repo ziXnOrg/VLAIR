@@ -1,0 +1,5 @@
+add_test( [==[IVFPQ v1.1 metadata JSON roundtrip and size limits]==] C:/Users/cisco/Desktop/dev/research/VLTAIR/build/Vesper/Release/ivfpq_v11_metadata_test.exe [==[IVFPQ v1.1 metadata JSON roundtrip and size limits]==]  )
+set_tests_properties( [==[IVFPQ v1.1 metadata JSON roundtrip and size limits]==] PROPERTIES WORKING_DIRECTORY C:/Users/cisco/Desktop/dev/research/VLTAIR/build/Vesper)
+add_test( [==[IVFPQ v1.1 metadata fallback from fixed header when no section present (opt-in)]==] C:/Users/cisco/Desktop/dev/research/VLTAIR/build/Vesper/Release/ivfpq_v11_metadata_test.exe [==[IVFPQ v1.1 metadata fallback from fixed header when no section present (opt-in)]==]  )
+set_tests_properties( [==[IVFPQ v1.1 metadata fallback from fixed header when no section present (opt-in)]==] PROPERTIES WORKING_DIRECTORY C:/Users/cisco/Desktop/dev/research/VLTAIR/build/Vesper)
+set( ivfpq_v11_metadata_test_TESTS [==[IVFPQ v1.1 metadata JSON roundtrip and size limits]==] [==[IVFPQ v1.1 metadata fallback from fixed header when no section present (opt-in)]==])

@@ -1,0 +1,12 @@
+{
+	"InstallScripts" : 
+	[
+		"C:/Users/cisco/Desktop/dev/research/VLTAIR/build/cmake_install.cmake",
+		"C:/Users/cisco/Desktop/dev/research/VLTAIR/build/Vesper/cmake_install.cmake",
+		"C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/croaring-build/cmake_install.cmake",
+		"C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/croaring-build/src/cmake_install.cmake",
+		"C:/Users/cisco/Desktop/dev/research/VLTAIR/build/bindings/python/pyvesper/cmake_install.cmake",
+		"C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/pybind11_proj-build/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

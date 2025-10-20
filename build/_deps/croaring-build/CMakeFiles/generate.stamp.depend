@@ -1,0 +1,17 @@
+# CMake generation dependency list for this directory.
+C:/Program Files/CMake/share/cmake-4.1/Modules/CPack.cmake
+C:/Program Files/CMake/share/cmake-4.1/Modules/CPackComponent.cmake
+C:/Program Files/CMake/share/cmake-4.1/Modules/CTest.cmake
+C:/Program Files/CMake/share/cmake-4.1/Modules/CTestTargets.cmake
+C:/Program Files/CMake/share/cmake-4.1/Modules/CTestUseLaunchers.cmake
+C:/Program Files/CMake/share/cmake-4.1/Modules/DartConfiguration.tcl.in
+C:/Program Files/CMake/share/cmake-4.1/Modules/GNUInstallDirs.cmake
+C:/Program Files/CMake/share/cmake-4.1/Templates/CPackConfig.cmake.in
+C:/Program Files/CMake/share/cmake-4.1/Templates/CTestScript.cmake.in
+C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/croaring-src/CMakeLists.txt
+C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/croaring-src/roaring.pc.in
+C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/croaring-src/tests/config.h.in
+C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/croaring-src/tools/cmake/FindCTargets.cmake
+C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/croaring-src/tools/cmake/FindLTO.cmake
+C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/croaring-src/tools/cmake/FindOptions.cmake
+C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/croaring-src/tools/cmake/Import.cmake

@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\pybind11_proj-subbuild\CMakeFiles\4d5fa367b45907c7e7352162855bad79\pybind11_proj-populate-mkdir.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\pybind11_proj-subbuild\CMakeFiles\4d5fa367b45907c7e7352162855bad79\pybind11_proj-populate-download.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\pybind11_proj-subbuild\CMakeFiles\4d5fa367b45907c7e7352162855bad79\pybind11_proj-populate-update.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\pybind11_proj-subbuild\CMakeFiles\4d5fa367b45907c7e7352162855bad79\pybind11_proj-populate-patch.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\pybind11_proj-subbuild\CMakeFiles\4d5fa367b45907c7e7352162855bad79\pybind11_proj-populate-configure.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\pybind11_proj-subbuild\CMakeFiles\4d5fa367b45907c7e7352162855bad79\pybind11_proj-populate-build.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\pybind11_proj-subbuild\CMakeFiles\4d5fa367b45907c7e7352162855bad79\pybind11_proj-populate-install.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\pybind11_proj-subbuild\CMakeFiles\4d5fa367b45907c7e7352162855bad79\pybind11_proj-populate-test.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\pybind11_proj-subbuild\CMakeFiles\23a6311f15dc3c049250d46f906ff37e\pybind11_proj-populate-complete.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\pybind11_proj-subbuild\CMakeFiles\3f8bfa5fa4bf05f75e1371926b50cd7c\pybind11_proj-populate.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\pybind11_proj-subbuild\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\pybind11_proj-subbuild\CMakeFiles\pybind11_proj-populate" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{916BE233-D738-36C2-B19F-B6321356A93C}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

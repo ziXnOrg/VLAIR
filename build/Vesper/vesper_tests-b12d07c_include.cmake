@@ -1,0 +1,5 @@
+if(EXISTS "C:/Users/cisco/Desktop/dev/research/VLTAIR/build/Vesper/vesper_tests-b12d07c_tests.cmake")
+  include("C:/Users/cisco/Desktop/dev/research/VLTAIR/build/Vesper/vesper_tests-b12d07c_tests.cmake")
+else()
+  add_test(vesper_tests_NOT_BUILT-b12d07c vesper_tests_NOT_BUILT-b12d07c)
+endif()

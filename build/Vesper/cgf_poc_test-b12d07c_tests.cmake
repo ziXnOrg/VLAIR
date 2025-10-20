@@ -1,0 +1,5 @@
+add_test( [==[CGF POC: Hybrid approach improves recall]==] C:/Users/cisco/Desktop/dev/research/VLTAIR/build/Vesper/Release/cgf_poc_test.exe [==[CGF POC: Hybrid approach improves recall]==]  )
+set_tests_properties( [==[CGF POC: Hybrid approach improves recall]==] PROPERTIES WORKING_DIRECTORY C:/Users/cisco/Desktop/dev/research/VLTAIR/build/Vesper)
+add_test( [==[CGF POC: Geometric filtering reduces candidates]==] C:/Users/cisco/Desktop/dev/research/VLTAIR/build/Vesper/Release/cgf_poc_test.exe [==[CGF POC: Geometric filtering reduces candidates]==]  )
+set_tests_properties( [==[CGF POC: Geometric filtering reduces candidates]==] PROPERTIES WORKING_DIRECTORY C:/Users/cisco/Desktop/dev/research/VLTAIR/build/Vesper)
+set( cgf_poc_test_TESTS [==[CGF POC: Hybrid approach improves recall]==] [==[CGF POC: Geometric filtering reduces candidates]==])

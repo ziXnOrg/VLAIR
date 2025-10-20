@@ -1,0 +1,14 @@
+﻿---
+description: Documentation and ADR standards
+globs: ["Docs/**/*.md"]
+alwaysApply: true
+---
+
+- Module docs must include:
+  - Overview, Security, Performance, Examples (math foundation where relevant)
+
+- ADRs for architectural decisions:
+  - Link PRs; keep Blueprint and Production Workflow aligned
+
+
+

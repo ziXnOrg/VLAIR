@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\croaring-subbuild\CMakeFiles\dcfd2fa58551cb513799d760fccc1f80\croaring-populate-mkdir.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\croaring-subbuild\CMakeFiles\dcfd2fa58551cb513799d760fccc1f80\croaring-populate-download.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\croaring-subbuild\CMakeFiles\dcfd2fa58551cb513799d760fccc1f80\croaring-populate-update.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\croaring-subbuild\CMakeFiles\dcfd2fa58551cb513799d760fccc1f80\croaring-populate-patch.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\croaring-subbuild\CMakeFiles\dcfd2fa58551cb513799d760fccc1f80\croaring-populate-configure.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\croaring-subbuild\CMakeFiles\dcfd2fa58551cb513799d760fccc1f80\croaring-populate-build.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\croaring-subbuild\CMakeFiles\dcfd2fa58551cb513799d760fccc1f80\croaring-populate-install.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\croaring-subbuild\CMakeFiles\dcfd2fa58551cb513799d760fccc1f80\croaring-populate-test.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\croaring-subbuild\CMakeFiles\4c8059a0ac02dc53da23a372dac97a50\croaring-populate-complete.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\croaring-subbuild\CMakeFiles\3189388ac1ef435a4f2919f0c663549c\croaring-populate.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\croaring-subbuild\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\build\_deps\croaring-subbuild\CMakeFiles\croaring-populate" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{A291908F-7008-3189-8E1F-752378B4E126}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

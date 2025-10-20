@@ -1,0 +1,21 @@
+﻿---
+description: Index and sources of truth for Agent Orchestration Framework
+globs: ["**/*"]
+alwaysApply: true
+---
+
+- Read these first:
+  - Docs/Blueprint.md
+  - Docs/production-agentic-workflow.md
+
+- Non-negotiables (project-level):
+  - Determinism and reproducibility (temperature=0, fixed seeds, idempotency keys)
+  - Correctness-first (tests drive implementation; failure paths covered)
+  - Performance targets appropriate to agents/context (document SLOs in PRs)
+  - Interface stability (versioned task/result schemas; backward-compatible changes)
+  - Security-conscious tool use; explicit error handling; no silent failures
+
+- Note: Crash-safety is optional; apply when persistence semantics are in-scope.
+
+
+

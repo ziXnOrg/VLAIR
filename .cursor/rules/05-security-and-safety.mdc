@@ -1,0 +1,16 @@
+﻿---
+description: Security and safety for tools and code execution
+globs: ["**/*"]
+alwaysApply: true
+---
+
+- Tooling & Execution:
+  - Structured tool/function calls only; no ad-hoc shell
+  - Sandbox execution; minimal privileges; time/memory limits
+  - No destructive operations without explicit approval and display of diff/impact
+
+- Output Hygiene:
+  - Sanitize/redact secrets; avoid leaking tokens/paths unintentionally
+
+
+

@@ -1,0 +1,13 @@
+# CMake generation dependency list for this directory.
+C:/Program Files/CMake/share/cmake-4.1/Modules/CheckCSourceCompiles.cmake
+C:/Program Files/CMake/share/cmake-4.1/Modules/CheckCXXCompilerFlag.cmake
+C:/Program Files/CMake/share/cmake-4.1/Modules/CheckIncludeFile.cmake
+C:/Program Files/CMake/share/cmake-4.1/Modules/CheckLibraryExists.cmake
+C:/Program Files/CMake/share/cmake-4.1/Modules/FindGit.cmake
+C:/Program Files/CMake/share/cmake-4.1/Modules/FindPackageHandleStandardArgs.cmake
+C:/Program Files/CMake/share/cmake-4.1/Modules/FindPackageMessage.cmake
+C:/Program Files/CMake/share/cmake-4.1/Modules/FindThreads.cmake
+C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/gbench-src/CMakeLists.txt
+C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/gbench-src/cmake/AddCXXCompilerFlag.cmake
+C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/gbench-src/cmake/CXXFeatureCheck.cmake
+C:/Users/cisco/Desktop/dev/research/VLTAIR/build/_deps/gbench-src/cmake/GetGitVersion.cmake

@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AgentResult",
+  "type": "object",
+  "properties": {
+    "type": { "const": "AgentResult" },
+    "id": { "type": "string" },
+    "parentId": { "type": "string" },
+    "agent": { "type": "string" },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "delta": { "type": ["object", "null"] },
+        "artifacts": { "type": "array", "items": {} },
+        "newTasks": { "type": "array", "items": {} }
+      },
+      "additionalProperties": true
+    },
+    "metrics": {
+      "type": "object",
+      "properties": {
+        "tokensUsed": { "type": "number" },
+        "timeMs": { "type": "number" }
+      },
+      "additionalProperties": true
+    },
+    "protocolVersion": { "type": "number", "default": 1 }
+  },
+  "required": ["type", "id", "parentId", "agent", "payload"],
+  "additionalProperties": true
+}

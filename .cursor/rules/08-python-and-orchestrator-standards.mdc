@@ -1,0 +1,12 @@
+﻿---
+description: Python orchestrator/agents standards (enable when code lands)
+globs: ["**/*.py"]
+alwaysApply: false
+---
+
+- Strong typing; explicit errors; structured logs/traces with correlation IDs
+- Deterministic prompts and seeds; record model/version/params
+- Isolate tool side-effects; never mutate external state without approval
+
+
+

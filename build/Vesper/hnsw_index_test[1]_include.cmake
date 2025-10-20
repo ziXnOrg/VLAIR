@@ -1,0 +1,5 @@
+if(EXISTS "C:/Users/cisco/Desktop/dev/research/VLTAIR/build/Vesper/hnsw_index_test[1]_tests.cmake")
+  include("C:/Users/cisco/Desktop/dev/research/VLTAIR/build/Vesper/hnsw_index_test[1]_tests.cmake")
+else()
+  add_test(hnsw_index_test_NOT_BUILT hnsw_index_test_NOT_BUILT)
+endif()

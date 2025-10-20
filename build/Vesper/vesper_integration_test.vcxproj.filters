@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\integration\vesper_integration_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\integration\dataset_loader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\tests\integration\capq_end_to_end_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\cisco\Desktop\dev\research\VLTAIR\Vesper\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{0864FB8A-B438-3373-82FF-3F284A4872B0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

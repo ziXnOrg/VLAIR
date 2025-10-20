@@ -1,0 +1,5 @@
+if(EXISTS "C:/Users/cisco/Desktop/dev/research/VLTAIR/build/Vesper/cgf_poc_test-b12d07c_tests.cmake")
+  include("C:/Users/cisco/Desktop/dev/research/VLTAIR/build/Vesper/cgf_poc_test-b12d07c_tests.cmake")
+else()
+  add_test(cgf_poc_test_NOT_BUILT-b12d07c cgf_poc_test_NOT_BUILT-b12d07c)
+endif()

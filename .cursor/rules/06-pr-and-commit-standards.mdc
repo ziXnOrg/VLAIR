@@ -1,0 +1,16 @@
+﻿---
+description: PR and commit standards for the agent framework
+globs: ["**/*"]
+alwaysApply: true
+---
+
+- PR must include:
+  - Plan summary; thought framework used; success criteria
+  - Tests/coverage; benchmarks; determinism evidence; attached artifacts
+
+- Commit message:
+  - Imperative subject; rationale; perf/safety notes
+  - Tests/coverage impact; determinism statement
+
+
+

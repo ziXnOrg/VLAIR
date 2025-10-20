@@ -1,0 +1,20 @@
+﻿---
+description: CI and quality gates for deterministic agent development
+globs: ["**/*"]
+alwaysApply: true
+---
+
+- Determinism & Reproducibility:
+  - LLM calls: temperature=0, top_p=1.0, fixed seeds; record model/version
+  - Use idempotency keys for agent tasks; no hidden side effects
+
+- CI gates (must pass):
+  - Lint, build, unit/integration/property tests
+  - Coverage >= 85% overall; include failure-path coverage
+  - Attach artifacts: coverage, logs, bench outputs, seeds/models
+
+- Budgets:
+  - Token and runtime budgets set per workflow; fail fast on overruns
+
+
+

@@ -1,0 +1,26 @@
+Start testing: Oct 20 15:41 Mountain Daylight Time
+----------------------------------------------------------
+1/4 Testing: python_unit_tests
+1/4 Test: python_unit_tests
+Command: "C:/Users/cisco/AppData/Local/Programs/Python/Python312/python.exe" "-m" "pytest" "-q" "tests/unit"
+Directory: C:/Users/cisco/Desktop/dev/research/VLTAIR
+"python_unit_tests" start time: Oct 20 15:41 Mountain Daylight Time
+Output:
+----------------------------------------------------------
+................................                                         [100%]
+============================== warnings summary ===============================
+orchestrator\context\models.py:92
+  C:\Users\cisco\Desktop\dev\research\VLTAIR\orchestrator\context\models.py:92: PytestCollectionWarning: cannot collect test class 'TestResultDocument' because it has a __init__ constructor (from: tests/unit/models_test.py)
+    @dataclass(frozen=True)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+32 passed, 1 warning in 0.87s
+<end of output>
+Test time =   1.63 sec
+----------------------------------------------------------
+Test Passed.
+"python_unit_tests" end time: Oct 20 15:41 Mountain Daylight Time
+"python_unit_tests" time elapsed: 00:00:01
+----------------------------------------------------------
+
+End testing: Oct 20 15:41 Mountain Daylight Time

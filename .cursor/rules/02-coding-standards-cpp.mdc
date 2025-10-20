@@ -1,0 +1,31 @@
+﻿---
+description: C++ coding standards for Vesper and related C++ modules
+globs: ["Vesper/**/*.hpp","Vesper/**/*.cpp","Vesper/include/**/*.hpp","Vesper/src/**/*.cpp"]
+alwaysApply: true
+---
+
+- Formatting:
+  - 2-space indent, no tabs; 100-column limit
+  - #pragma once; sorted/regrouped includes; headers self-sufficient
+
+- Naming:
+  - Namespaces: lower_case; Types: PascalCase
+  - Functions/Methods: lower_snake_case; Variables: lower_snake_case
+  - Private members: trailing underscore; Constants: UPPER_SNAKE_CASE (or kCamelCase if explicitly chosen)
+
+- Design & Documentation:
+  - RAII; explicit pre/post-conditions; document complexity for public APIs
+  - Immutability by default; isolate intrinsics; provide scalar reference path
+  - Cache-conscious layouts; avoid needless allocations on hot paths
+
+- Error Handling:
+  - No silent failures; use status/std::expected; no exceptions on hot paths/C ABI
+
+- Determinism:
+  - Fixed seeds for randomized flows; stable fixtures; forbid non-determinism in core paths unless justified
+
+- Conformance:
+  - Conform to repo .clang-format/.clang-tidy; violations block PRs
+
+
+

@@ -1,0 +1,30 @@
+﻿---
+description: Production Agentic Workflow enforcement
+globs: ["**/*"]
+alwaysApply: true
+---
+
+- Phases (must follow):
+  1) Understanding -> 2) Planning -> 3) Context Gathering (Stratified) -> 4) Implementation (TDD RED->GREEN->REFACTOR) -> 5) Verification -> 6) Reflection & Documentation
+
+- Mandatory approval gates:
+  - After Planning (plan review)
+  - Before Major Changes (files, scope, risks)
+  - After Test Failures (RCA + proposed fix)
+  - Before Commit (summary, tests, quality metrics)
+
+- Thought/Reflection scaffolds (required):
+  - THOUGHT PROCESS block before significant action (goal, facts, unknowns, assumptions, approach, risks, success criteria, confidence)
+  - REFLECTION block after significant action (what done, quality checks, improvements, continue?)
+
+- Iteration policy:
+  - Max 5 iterations per component; use KEEP/REVERT on verification step
+
+- Stratified context retrieval:
+  - L1 High-Level -> L2 Targeted Dive -> L3 Precision Focus; exit when sufficient or max strata (<=5)
+
+- Evidence:
+  - Record success criteria, confidence, and decision points in PR description
+
+
+

@@ -1,0 +1,5 @@
+if(EXISTS "C:/Users/cisco/Desktop/dev/research/VLTAIR/build/Vesper/kmeans_test[1]_tests.cmake")
+  include("C:/Users/cisco/Desktop/dev/research/VLTAIR/build/Vesper/kmeans_test[1]_tests.cmake")
+else()
+  add_test(kmeans_test_NOT_BUILT kmeans_test_NOT_BUILT)
+endif()
