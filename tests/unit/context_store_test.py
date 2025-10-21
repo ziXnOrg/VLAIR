@@ -25,7 +25,11 @@ def _ensure_pyvesper_on_path() -> None:
 
 
 _ensure_pyvesper_on_path()
-import pyvesper  # noqa: E402
+
+try:
+  import pyvesper  # noqa: E402
+except ImportError:
+  pytest.skip("pyvesper not importable; skipping context_store_test", allow_module_level=True)
 
 from orchestrator.context.vesper_context_store import VesperContextStore  # noqa: E402
 from orchestrator.context.context_store import ContextStore  # noqa: E402

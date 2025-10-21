@@ -14,7 +14,7 @@ def test_e2e_codegen_analysis_test_flow():
   o.set_context_store(mock_store)
 
   # 1) Submit a CodeGen task (stubs produce delta.doc and diff_summary)
-  t1 = {"type": "AgentTask", "id": "t-codegen", "agent": "CodeGenAgent", "payload": {"target": "src/new_feature.cpp"}}
+  t1 = {"type": "AgentTask", "id": "t-codegen", "agent": "CodeGenAgent", "payload": {"action": "create", "target": "src/new_feature.cpp"}}
   out1 = o.submit_task(t1)
   assert out1["accepted"] is True
 
