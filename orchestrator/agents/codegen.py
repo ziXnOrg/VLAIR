@@ -12,7 +12,12 @@ class CodeGenAgent(Agent):
   def run(self, task: Dict[str, Any]) -> Dict[str, Any]:
     payload = task.get("payload", {})
     target = payload.get("target", "")
-    # Produce AgentResult-shaped dict
+    # Produce AgentResult-shaped dict with diff summary and hints
+    diff_summary = {
+      "insertions": 1,
+      "deletions": 0,
+      "files_changed": 1
+    }
     return {
       "type": "AgentResult",
       "id": f"res-{task.get('id','')}",
@@ -24,7 +29,10 @@ class CodeGenAgent(Agent):
             "path": target,
             "content": "/* generated */\n",
           }
-        }
+        },
+        "artifacts": [
+          {"kind": "diff_summary", "target": target, "summary": diff_summary}
+        ]
       }
     }
 

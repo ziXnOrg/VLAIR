@@ -11,12 +11,21 @@
 | 7 | CMake wiring | Link include paths, compile features (C++20), link Vesper targets; wheel build script stub | Build | High | Completed | 2025-10-22 | 2025-10-22 | bindings/python/pyvesper/CMakeLists.txt |
 | 8 | ContextStore.search | Map to pyvesper.search_hybrid; strategy from mode (dense/sparse/hybrid); filters conversion | Principal Eng | High | Completed | 2025-10-23 | 2025-10-23 | orchestrator/context/vesper_context_store.py |
 | 9 | Context models | Define Document/Result models; add metadata typing and idempotency key helpers | Principal Eng | Medium | Completed | 2025-10-23 | 2025-10-23 | orchestrator/context/models.py |
-| 10 | Schema validators | Implement validators.py/types.py; wire to schemas; add round-trip tests | Principal Eng | High | In Progress | 2025-10-24 | 2025-10-24 | orchestrator/schemas/{*.schema.json, validators.py, types.py} |
+| 10 | Schema validators | Implement validators.py/types.py; wire to schemas; add round-trip tests | Principal Eng | High | Completed | 2025-10-24 | 2025-10-24 | orchestrator/schemas/{*.schema.json, validators.py, types.py} |
 | 11 | Orchestrator DAG & scheduler | Implement dag.py (deps/ready-set), scheduler.py (bounded concurrency), retries/backoff | Principal Eng | High | In Progress | 2025-10-24 | 2025-10-25 | orchestrator/core/{dag.py,scheduler.py,retries.py,budgets.py} |
 | 12 | CLI runner | Minimal `orchestrator run --goal` invoking core and printing trace | Principal Eng | Medium | In Progress | 2025-10-25 | 2025-10-25 | cli/orchestrator_cli.py |
 | 13 | Unit tests batch 1 | bindings_test, context_store_test, schemas_test | QA | High | In Progress | 2025-10-25 | 2025-10-26 | tests/unit/* |
-| 14 | Integration smoke | search_smoke_test (tiny in-memory dataset) with deterministic checks | QA | High | Pending | 2025-10-26 | 2025-10-26 | tests/integration/search_smoke_test.py |
-| 15 | Micro-bench setup | hybrid_search_bench/upsert_bench; capture P50/P95; export CSV | QA | Medium | Not Started | 2025-10-26 | 2025-10-27 | bench/context/* |
+| 14 | Integration smoke | search_smoke_test (tiny in-memory dataset) with deterministic checks | QA | High | Completed | 2025-10-26 | 2025-10-26 | tests/integration/search_smoke_test.py |
+| 15 | Micro-bench setup | hybrid_search_bench/upsert_bench; capture P50/P95; export CSV | QA | Medium | In Progress | 2025-10-26 | 2025-10-27 | bench/context/* |
+| 16 | P2 research notes | Summarize Phase 2 agent workflows and gaps | Principal Eng | High | Completed | 2025-10-26 | 2025-10-26 | P2/notes/agent_workflows_research.md |
+| 17 | Update plan with P2 research | Insert P2 Research batch and references | Principal Eng | High | Completed | 2025-10-26 | 2025-10-26 | Docs/ImplementationPlan.md |
+| 18 | Redaction hooks & tests | Implement sanitize_text/sanitize_artifact; env-config; add param tests incl. field-based redaction | Principal Eng | High | Completed | 2025-10-26 | 2025-10-26 | orchestrator/obs/redaction.py; tests/unit/phase2_param_tests.py |
+| 19 | Structured docs & persistence | Add DiffSummaryDocument/CoverageHintDocument and ContextStore helpers; integrate in orchestrator | Principal Eng | Medium | Completed | 2025-10-26 | 2025-10-26 | orchestrator/context/models.py; orchestrator/core/orchestrator.py |
+| 20 | CLI redaction config | Add CLI flags/env display for redaction prefixes/fields; docs/examples | Principal Eng | Medium | Completed | 2025-10-27 | 2025-10-27 | cli/orchestrator_cli.py; SECURITY.md |
+| 21 | Markdownlint enforcement | Integrate markdownlint in pre-commit; fix warnings | Principal Eng | Medium | In Progress | 2025-10-27 | 2025-10-27 | .pre-commit-config.yaml; .markdownlint.json |
+| 22 | Benches in CI | Wire benches to CI thresholds; publish timing artifacts | Principal Eng | Medium | Pending | 2025-10-27 | 2025-10-28 | bench/context/* |
+| 23 | E2E dispatch review | Add end-to-end dispatch test and perform code review | Principal Eng | Medium | Pending | 2025-10-27 | 2025-10-28 | tests/integration/* |
+| 24 | README cross-links | Add redaction/query CLI usage cross-links | Principal Eng | Low | Pending | 2025-10-27 | 2025-10-28 | README.md |
 
 Notes:
 - All tasks must follow the Production Agentic Workflow (Understanding -> Planning -> Context -> Implementation -> Verification -> Reflection) and re-check Blueprint + rules at batch end.

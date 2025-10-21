@@ -1,5 +1,7 @@
-python_unit_tests 16 0.101899
-test_c_api_example 1 0.026639
-test_c_index_manager_example 1 0.0275407
+python_unit_tests 30 0
+test_c_api_example 2 0.0131021
+test_c_index_manager_example 2 0.0134234
 pyvesper_import 0 0
 ---
+python_unit_tests
+pyvesper_import

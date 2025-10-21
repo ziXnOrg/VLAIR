@@ -105,3 +105,32 @@ class TestResultDocument:
 
 
 
+@dataclass(frozen=True)
+class DiffSummaryDocument:
+  id: int
+  target: str
+  files_changed: int
+  insertions: int
+  deletions: int
+  metadata: Dict[str, Any]
+
+  def __post_init__(self) -> None:
+    validate_metadata(self.metadata, required={"origin": str}, optional={})
+
+  def to_dict(self) -> Dict[str, Any]:
+    return asdict(self)
+
+
+@dataclass(frozen=True)
+class CoverageHintDocument:
+  id: int
+  files: list[str]
+  line_rate: float
+  metadata: Dict[str, Any]
+
+  def __post_init__(self) -> None:
+    validate_metadata(self.metadata, required={"origin": str}, optional={})
+
+  def to_dict(self) -> Dict[str, Any]:
+    return asdict(self)
+

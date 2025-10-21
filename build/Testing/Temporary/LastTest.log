@@ -1,26 +1,116 @@
-Start testing: Oct 20 15:41 Mountain Daylight Time
+Start testing: Oct 20 22:22 Mountain Daylight Time
 ----------------------------------------------------------
 1/4 Testing: python_unit_tests
 1/4 Test: python_unit_tests
 Command: "C:/Users/cisco/AppData/Local/Programs/Python/Python312/python.exe" "-m" "pytest" "-q" "tests/unit"
 Directory: C:/Users/cisco/Desktop/dev/research/VLTAIR
-"python_unit_tests" start time: Oct 20 15:41 Mountain Daylight Time
+"python_unit_tests" start time: Oct 20 22:22 Mountain Daylight Time
 Output:
 ----------------------------------------------------------
-................................                                         [100%]
-============================== warnings summary ===============================
-orchestrator\context\models.py:92
-  C:\Users\cisco\Desktop\dev\research\VLTAIR\orchestrator\context\models.py:92: PytestCollectionWarning: cannot collect test class 'TestResultDocument' because it has a __init__ constructor (from: tests/unit/models_test.py)
-    @dataclass(frozen=True)
-
--- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-32 passed, 1 warning in 0.87s
 <end of output>
-Test time =   1.63 sec
+Test time = 1500.03 sec
+----------------------------------------------------------
+Test Failed.
+"python_unit_tests" end time: Oct 20 22:47 Mountain Daylight Time
+"python_unit_tests" time elapsed: 00:25:00
+----------------------------------------------------------
+
+2/4 Testing: test_c_api_example
+2/4 Test: test_c_api_example
+Command: "C:/Users/cisco/Desktop/dev/research/VLTAIR/build/Vesper/Release/vesper_c_example.exe"
+Directory: C:/Users/cisco/Desktop/dev/research/VLTAIR/build/Vesper
+"test_c_api_example" start time: Oct 20 22:47 Mountain Daylight Time
+Output:
+----------------------------------------------------------
+Vesper C API version: dev
+is_trained (before): 0
+dimension=32, is_trained (after): 1
+stats: n_vectors=100 n_lists=16 m=8 memory_bytes=11168 avg_list_size=6.250
+single search (k=5) results:
+  #0: id=0 dist=44.687500
+  #1: id=1 dist=44.687500
+  #2: id=2 dist=44.687500
+  #3: id=3 dist=44.687500
+  #4: id=4 dist=44.687500
+batch search (nq=10, k=5) first row:
+  #0: id=0 dist=44.687500
+  #1: id=1 dist=44.687500
+  #2: id=2 dist=44.687500
+  #3: id=3 dist=44.687500
+  #4: id=4 dist=44.687500
+metadata json (len=44): {"source":"vesper_c_example","note":"hello"}
+single search after load:
+  #0: id=0 dist=44.687500
+  #1: id=1 dist=44.687500
+  #2: id=2 dist=44.687500
+  #3: id=3 dist=44.687500
+  #4: id=4 dist=44.687500
+C API example completed successfully.
+<end of output>
+Test time =   0.03 sec
 ----------------------------------------------------------
 Test Passed.
-"python_unit_tests" end time: Oct 20 15:41 Mountain Daylight Time
-"python_unit_tests" time elapsed: 00:00:01
+"test_c_api_example" end time: Oct 20 22:47 Mountain Daylight Time
+"test_c_api_example" time elapsed: 00:00:00
 ----------------------------------------------------------
 
-End testing: Oct 20 15:41 Mountain Daylight Time
+3/4 Testing: test_c_index_manager_example
+3/4 Test: test_c_index_manager_example
+Command: "C:/Users/cisco/Desktop/dev/research/VLTAIR/build/Vesper/Release/vesper_manager_example.exe"
+Directory: C:/Users/cisco/Desktop/dev/research/VLTAIR/build/Vesper
+"test_c_index_manager_example" start time: Oct 20 22:47 Mountain Daylight Time
+Output:
+----------------------------------------------------------
+Vesper C API version: dev
+IndexManager single search (k=5) results:
+  #0: id=0 dist=44.687500
+  #1: id=1 dist=44.687500
+  #2: id=2 dist=44.687500
+  #3: id=3 dist=44.687500
+  #4: id=4 dist=44.687500
+Filtered search not available in this build: JSON parsing not enabled
+IndexManager batch search (nq=10, k=5) first row:
+  #0: id=0 dist=44.687500
+  #1: id=1 dist=44.687500
+  #2: id=2 dist=44.687500
+  #3: id=3 dist=44.687500
+  #4: id=4 dist=44.687500
+IndexManager stats (count=1):
+  type=1 num_vectors=200 mem=39168 disk=0 avg_q_ms=0.000 recall=0.000 queries=0
+after load (k=5):
+  #0: id=0 dist=44.687500
+  #1: id=1 dist=44.687500
+  #2: id=2 dist=44.687500
+  #3: id=3 dist=44.687500
+  #4: id=4 dist=44.687500
+after update/remove (k=5): first id=0
+memory budget now: 64 MB
+resource usage: mem=39168 bytes disk=0 bytes
+IndexManager C API example completed successfully.
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"test_c_index_manager_example" end time: Oct 20 22:47 Mountain Daylight Time
+"test_c_index_manager_example" time elapsed: 00:00:00
+----------------------------------------------------------
+
+4/4 Testing: pyvesper_import
+4/4 Test: pyvesper_import
+Command: "C:/Users/cisco/AppData/Local/Programs/Python/Python312/python.exe" "-c" "import pyvesper; e=pyvesper.Engine(); print('ok')"
+Directory: C:/Users/cisco/Desktop/dev/research/VLTAIR/build/bindings/python/pyvesper
+"pyvesper_import" start time: Oct 20 22:47 Mountain Daylight Time
+Output:
+----------------------------------------------------------
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+ModuleNotFoundError: No module named 'pyvesper'
+<end of output>
+Test time =   0.05 sec
+----------------------------------------------------------
+Test Failed.
+"pyvesper_import" end time: Oct 20 22:47 Mountain Daylight Time
+"pyvesper_import" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Oct 20 22:47 Mountain Daylight Time

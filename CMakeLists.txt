@@ -27,6 +27,12 @@ if (Python3_Interpreter_FOUND)
       COMMAND ${Python3_EXECUTABLE} -m pytest -q tests/unit
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     )
+    # E2E dispatch (integration) subset if present
+    add_test(
+      NAME python_integration_tests
+      COMMAND ${Python3_EXECUTABLE} -m pytest -q tests/integration
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    )
   else()
     message(STATUS "pytest not found; skipping python_unit_tests registration")
   endif()

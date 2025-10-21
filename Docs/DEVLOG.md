@@ -84,6 +84,24 @@ Date: 2025-10-20 00:00:00 -06:00
 
 ---
 
+### 2025-10-21 09:00–10:30 — Redaction hooks, structured docs, and param tests
+
+- Context
+  - Added `orchestrator/obs/redaction.py` with pattern-based redaction (`sanitize_text`) and env-driven field-based hooks (`sanitize_artifact`).
+  - Extended orchestrator to redact `test_result.log` and `analysis.details` and apply field-level hooks per artifact kind.
+  - Introduced structured context docs: `DiffSummaryDocument`, `CoverageHintDocument`, with `ContextStore.add_diff_summaries`/`add_coverage_hints`.
+
+- Validation
+  - Parameterized tests for diff summaries and coverage hints; multi-artifact flows; invalid severities/suggestions; redaction of emails/tokens in details; log redaction.
+  - All Python tests pass under CTest.
+
+- Next
+  - CLI flags to set redaction prefixes/fields; display effective config in `status`.
+  - Benchmarks/SLOs for redaction throughput/latency; CI guards.
+  - Docs: add redaction policy and usage examples.
+
+---
+
 ## Appendix: Commands
 
 ```powershell

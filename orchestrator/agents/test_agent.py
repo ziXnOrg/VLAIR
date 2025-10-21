@@ -27,6 +27,11 @@ class TestAgent(Agent):
               "test_name": test_name,
               "status": status,
               "log": ""
+            },
+            {
+              "kind": "coverage_hint",
+              "files": ["a.cpp"],
+              "line_rate": 0.75
             }
           ]
         }

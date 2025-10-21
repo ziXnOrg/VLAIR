@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import List, Optional, Sequence, Union, Dict, Any, TYPE_CHECKING
 
 from .models import SearchResult
-from .models import TestResultDocument
+from .models import TestResultDocument, DiffSummaryDocument, CoverageHintDocument
 from typing import Literal
 Mode = Literal["dense", "sparse", "hybrid"]
 if TYPE_CHECKING:
@@ -91,6 +91,40 @@ class ContextStore:
       meta.append(m)
     self._backend.add(ids, vectors, meta)
 
+  def add_diff_summaries(self, diffs: Sequence[DiffSummaryDocument]) -> None:
+    ids: List[int] = []
+    vectors: List[Sequence[float]] = []
+    meta: List[Dict[str, str]] = []
+    for d in diffs:
+      ids.append(d.id)
+      vectors.append([0.0])
+      m: Dict[str, str] = {
+        **{k: str(v) for k, v in d.metadata.items()},
+        "type": "diff_summary",
+        "target": d.target,
+        "files_changed": str(d.files_changed),
+        "insertions": str(d.insertions),
+        "deletions": str(d.deletions),
+      }
+      meta.append(m)
+    self._backend.add(ids, vectors, meta)
+
+  def add_coverage_hints(self, hints: Sequence[CoverageHintDocument]) -> None:
+    ids: List[int] = []
+    vectors: List[Sequence[float]] = []
+    meta: List[Dict[str, str]] = []
+    for h in hints:
+      ids.append(h.id)
+      vectors.append([0.0])
+      m: Dict[str, str] = {
+        **{k: str(v) for k, v in h.metadata.items()},
+        "type": "coverage_hint",
+        "files": ",".join(h.files),
+        "line_rate": str(h.line_rate),
+      }
+      meta.append(m)
+    self._backend.add(ids, vectors, meta)
+
   def search(self,
              text: str = "",
              embedding: Optional[Union[Sequence[float], Any]] = None,
@@ -99,3 +133,24 @@ class ContextStore:
              mode: Mode = "hybrid",
              filters: Optional[Union[Dict[str, str], str]] = None) -> List[SearchResult]:
     return self._backend.search(text, embedding, k=k, mode=mode, filters=filters)
+
+  def structured_query(self,
+                       *,
+                       text: str = "",
+                       embedding: Optional[Union[Sequence[float], Any]] = None,
+                       k: int = 10,
+                       mode: Mode = "hybrid",
+                       filters: Optional[Union[Dict[str, str], str]] = None,
+                       rrf_k: float = 60.0,
+                       dense_weight: float = 0.5,
+                       sparse_weight: float = 0.5,
+                       rerank_factor: int = 10) -> List[SearchResult]:
+    """Minimal structured query wrapper for advanced knobs.
+
+    This forwards to the backend search with explicit fusion/strategy parameters.
+    """
+    # Delegate to backend with extended parameters if available
+    backend = getattr(self._backend, "search")
+    return backend(text, embedding, k=k, mode=mode, filters=filters,
+                   rrf_k=rrf_k, dense_weight=dense_weight, sparse_weight=sparse_weight,
+                   rerank_factor=rerank_factor)

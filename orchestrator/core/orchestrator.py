@@ -10,6 +10,7 @@ from orchestrator.agents.test_agent import TestAgent
 from orchestrator.agents.static_analysis import StaticAnalysisAgent
 from orchestrator.context.context_store import ContextStore
 from orchestrator.context.models import CodeDocument
+from orchestrator.obs.redaction import sanitize_text, sanitize_artifact
 
 
 class Orchestrator:
@@ -113,6 +114,8 @@ class Orchestrator:
         else:
           continue
         kind = str(art.get("kind", ""))
+        # Field-based redaction hook (env-configurable)
+        sanitize_artifact(art, kind)
         if kind == "text":
           from orchestrator.context.models import TextDocument
           title_val: Any = art.get("title")
@@ -129,15 +132,79 @@ class Orchestrator:
           log_val: Any = art.get("log")
           test_name = str(tn_val) if tn_val is not None else ""
           status = str(st_val) if st_val is not None else ""
-          log = str(log_val) if log_val is not None else None
-          doc_id = hash(test_name + status + (log or "")) & 0x7FFFFFFF
+          raw_log = str(log_val) if log_val is not None else None
+          redacted_log = sanitize_text(raw_log or "")
+          doc_id = hash(test_name + status + (redacted_log or "")) & 0x7FFFFFFF
           if not test_name:
             raise ValueError("AgentResult artifact 'test_result' missing required field 'test_name'")
           if not status:
             raise ValueError("AgentResult artifact 'test_result' missing required field 'status'")
-          tr = TestResultDocument(id=doc_id, test_name=test_name, status=status, log=log, metadata={"origin": str(result.get("agent", ""))})
+          tr = TestResultDocument(id=doc_id, test_name=test_name, status=status, log=redacted_log, metadata={"origin": str(result.get("agent", ""))})
           # Persist via dedicated helper, and also render a text doc for retrieval
           self._ensure_ctx().add_test_results([tr])
-          rendered = f"[{status}] {test_name}\n{log or ''}"
+          rendered = f"[{status}] {test_name}\n{redacted_log or ''}"
           text_doc = TextDocument(id=doc_id, title=f"test:{test_name}", content=rendered, metadata={"origin": str(result.get("agent", ""))})
           self._ensure_ctx().add_text_documents([text_doc], [[0.0]])
+        elif kind == "analysis":
+          from orchestrator.context.models import TextDocument
+          target_val: Any = art.get("target")
+          details_val: Any = art.get("details")
+          target = str(target_val) if target_val is not None else ""
+          if details_val is None:
+            raise ValueError("AgentResult artifact 'analysis' missing required field 'details'")
+          details = sanitize_text(str(details_val))
+          severity = str(art.get("severity", "info"))
+          allowed = {"info", "warn", "error"}
+          if severity not in allowed:
+            raise ValueError(f"AgentResult artifact 'analysis' invalid 'severity': {severity}")
+          suggestions = art.get("suggestions")
+          if suggestions is not None and not isinstance(suggestions, list):
+            raise ValueError("AgentResult artifact 'analysis' field 'suggestions' must be a list when provided")
+          if isinstance(suggestions, list):
+            sugg_list: list[str] = cast(list[str], suggestions)
+            if len(sugg_list) > 10:
+              raise ValueError("AgentResult artifact 'analysis' field 'suggestions' too many items (>10)")
+            for s in sugg_list:
+              if len(s) > 256:
+                raise ValueError("AgentResult artifact 'analysis' field 'suggestions' item exceeds 256 chars")
+          title = f"analysis:{target}" if target else "analysis"
+          doc_id = hash(title + details) & 0x7FFFFFFF
+          content = f"[{severity}]\n{details}" if severity else details
+          text_doc = TextDocument(id=doc_id, title=title, content=content, metadata={"origin": str(result.get("agent", ""))})
+          self._ensure_ctx().add_text_documents([text_doc], [[0.0]])
+        elif kind == "diff_summary":
+          from orchestrator.context.models import TextDocument, DiffSummaryDocument
+          target_val2: Any = art.get("target")
+          summary_val: Any = art.get("summary")
+          target = str(target_val2) if target_val2 is not None else ""
+          if not isinstance(summary_val, dict):
+            raise ValueError("AgentResult artifact 'diff_summary' missing or invalid 'summary' dict")
+          files_changed = int(cast(Dict[str, Any], summary_val).get('files_changed', 0))
+          insertions = int(cast(Dict[str, Any], summary_val).get('insertions', 0))
+          deletions = int(cast(Dict[str, Any], summary_val).get('deletions', 0))
+          title = f"diff:{target}" if target else "diff"
+          content = f"files_changed={files_changed}, insertions={insertions}, deletions={deletions}"
+          doc_id = hash(title + content) & 0x7FFFFFFF
+          text_doc = TextDocument(id=doc_id, title=title, content=content, metadata={"origin": str(result.get("agent", ""))})
+          self._ensure_ctx().add_text_documents([text_doc], [[0.0]])
+          # Persist structured
+          diff_doc = DiffSummaryDocument(id=doc_id, target=target, files_changed=files_changed, insertions=insertions, deletions=deletions, metadata={"origin": str(result.get("agent", ""))})
+          self._ensure_ctx().add_diff_summaries([diff_doc])
+        elif kind == "coverage_hint":
+          from orchestrator.context.models import TextDocument, CoverageHintDocument
+          files_any: Any = art.get("files")
+          line_rate_val: Any = art.get("line_rate")
+          files_val: list[str] | None = cast(list[str], files_any) if isinstance(files_any, list) else None
+          if files_val is None:
+            raise ValueError("AgentResult artifact 'coverage_hint' missing or invalid 'files' list")
+          try:
+            rate = float(line_rate_val) if line_rate_val is not None else 0.0
+          except Exception:
+            raise ValueError("AgentResult artifact 'coverage_hint' has non-numeric 'line_rate'")
+          title = "coverage:hint"
+          content = f"line_rate={rate}, files={','.join(files_val)}"
+          doc_id = hash(title + content) & 0x7FFFFFFF
+          text_doc = TextDocument(id=doc_id, title=title, content=content, metadata={"origin": str(result.get("agent", ""))})
+          self._ensure_ctx().add_text_documents([text_doc], [[0.0]])
+          cov_doc = CoverageHintDocument(id=doc_id, files=files_val, line_rate=rate, metadata={"origin": str(result.get("agent", ""))})
+          self._ensure_ctx().add_coverage_hints([cov_doc])

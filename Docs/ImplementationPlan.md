@@ -146,32 +146,7 @@
 - Rule Alignment Check:
   - `01-production-workflow`, `04-testing-and-benchmarks`
 
-### P1-Batch 1.3 — Protocol and Schemas v1
-
-- Files:
-  - `orchestrator/schemas/{AgentTask.schema.json, AgentResult.schema.json, AgentError.schema.json}`
-  - `orchestrator/schemas/{validators.py, types.py}`
-- Details:
-  - Constraints include `{timeoutMs, deterministic, idempotencyKey}`; metrics include `{tokensUsed, timeMs}`
-  - Validation strictness: permit additionalProperties to allow agent-specific payloads in v1; tighten in v2
-- Acceptance:
-  - Round-trip validation for sample tasks/results/errors
-- Rule Alignment Check:
-  - `03-ci-and-quality-gates`, `06-pr-and-commit-standards`
-
-### P1-Batch 1.4 — Orchestrator Core and Scheduler
-
-- Files:
-  - `orchestrator/core/{orchestrator.py, scheduler.py, dag.py, retries.py, budgets.py}`
-  - `cli/orchestrator_cli.py`
-- Deterministic scheduling & budgets:
-  - Ready-set selection stable under fixed seed; bounded concurrency setting; retries with backoff ceilings; DLQ on persistent failures; token/runtime budgets enforced
-- Observability:
-  - Correlation IDs: `traceId`, `task.id`, `parentId`; structured JSON logs
-- Acceptance:
-  - Unit tests for DAG, retries, budget enforcement; CLI exercises a dry run with mocks
-- Rule Alignment Check:
-  - `01-production-workflow`, `05-security-and-safety`
+### P1-Batch 1.4 — Orchestrator Core and Scheduler (excerpt: CLI)
 
 CLI examples:
 
@@ -184,35 +159,21 @@ CLI examples:
   - Interpret: `queued` = pending tasks, `workers` = active worker threads, `stopped` = scheduler state.
   - Example output: `{ "ok": true, "queued": 0, "workers": 2, "stopped": false }`.
   - For JSON piping: `orchestrator queue | jq .queued`.
-- Submit with constraints examples:
-  - Budgeted task: `{ "type":"AgentTask", "id":"t42", "agent":"TestAgent", "payload": {"mode":"execute"}, "constraints": {"timeoutMs": 2500, "deterministic": true, "idempotencyKey": "run-42"} }`.
-  - Error surfacing: non-0 exit prints `{ ok:false, traceId, error }`.
+- Structured query:
+  - Dry-run (no Vesper): `VLTAIR_TEST_MODE=1 orchestrator query --text "vector search" --k 5 --mode hybrid --rrf-k 60 --dense-weight 0.6 --sparse-weight 0.4 --rerank-factor 10 --filter-kv type=text`
+  - Real query (with Vesper): `orchestrator query --text "coverage hints" --k 10 --mode hybrid --filter-json '{"type":"coverage_hint"}'`
 
-### P1-Batch 1.5 — Observability Baseline
+---
 
-- Files:
-  - `orchestrator/obs/{logging.py, tracing.py}`
-- Deliverables:
-  - Structured logs (JSON) with `traceId`, `taskId`, latencies; optional OpenTelemetry spans
-- Acceptance:
-  - Logs present in unit/integration runs; optional trace export toggled
+### P1-Batch 1.4 — Orchestrator Core and Scheduler (Testing Notes)
 
-### P1-Batch 1.6 — Tests and Micro-Benchmarks
-
-- Tests:
-  - `tests/unit/{bindings_test.py, context_store_test.py, schemas_test.py, scheduler_test.py}`
-  - `tests/integration/{search_smoke_test.py}`
-- Bench:
-  - `bench/context/{hybrid_search_bench.py, upsert_bench.py}` measure P50/P95
-- Acceptance:
-  - CI green; coverage >= 85%; artifacts uploaded: coverage report, bench CSV/JSON, logs
-- Reflection & Alignment Check:
-  - Re-open Blueprint and rules; cut Phase 2 tracking issues
-
-### Phase 1 Acceptance Criteria
-
-- Minimal deterministic E2E: upsert a few docs -> hybrid search -> orchestrator consumes results deterministically.
-- Schemas validated; CLI runs; logs and traces present; coverage >= 85%; micro-bench baseline recorded.
+- Router tests:
+  - Verify agent selection falls back to least-loaded idle when agent unspecified.
+  - Validate queue metrics expose queued/workers/stopped fields.
+- Retry/backoff tests:
+  - Simulate transient failures; assert ≥2 retries and backoff gaps (~10ms with patched backoff).
+- Budget tests:
+  - Enforce timeoutMs budget < handler runtime; assert single invocation and drop (no retry).
 
 ---
 
@@ -223,6 +184,18 @@ CLI examples:
 - Implement deterministic CodeGen, TestGen/Exec, StaticAnalysis, and Debug agents with clear scopes and guardrails.
 - Demonstrate two complete workflows: feature add; failing-test fix loop.
 - Enforce budgets and determinism; integrate with ContextStore.
+
+### P2-Batch 2.0 — Research Synthesis (pre-Batch)
+
+- Files:
+  - `P2/notes/agent_workflows_research.md`
+- Deliverables:
+  - Summarize CodeGen/TestGen/Exec/StaticAnalysis/Debug workflows; identify context interactions, result payloads, and validator gaps.
+  - Capture acceptance criteria and SLOs for Phase 2 agents and workflows.
+- Acceptance:
+  - Notes published; gaps list created and referenced below; ImplementationPlan updated accordingly.
+- References:
+  - `P1/notes/*` methodology replicated for Phase 2
 
 ### P2-Batch 2.1 — Agent Interfaces and Registry
 
@@ -304,6 +277,16 @@ CLI examples:
 - Reflection and Alignment Check:
   - Re-open Blueprint and rules; open issues for Phase 3
 
+### Phase 2 — Redaction & Security Hardening (NEW)
+
+- Files:
+  - `orchestrator/obs/redaction.py`, `SECURITY.md`, `cli/orchestrator_cli.py`
+- Deliverables:
+  - Pattern-based and field-based redaction hooks with env config; documentation; CLI flags to toggle `VLTAIR_REDACT_PREFIXES` and `VLTAIR_REDACT_FIELDS`.
+  - Parameterized tests for redaction/invalid severities/suggestions; multi-artifact flows; performance micro-bench with SLOs.
+- Acceptance:
+  - All sensitive patterns redacted in tests; field-based selectors applied; perf meets SLO; docs updated.
+
 ### Phase 2 Acceptance Criteria
 
 - Both workflows complete deterministically; Debug loop resolves failing tests; budgets enforced; coverage >= 85%; artifacts/benchmarks attached.
@@ -311,27 +294,23 @@ CLI examples:
 ---
 
 ## Phase 3 — Context Versioning, Merge, and Hierarchical Planning (OUTLINE)
-
 - Context versioning and three-way merge strategy; conflict detection; optimistic concurrency checks; optional MergeAgent; snapshots/rollback gated.
 - Orchestrator hierarchical scheduling; parallelism with backpressure and concurrency limits; causal consistency choices.
 - Extended observability: agent timelines; event-sourced audit for replay.
 - Alignment ritual after each batch.
 
 ## Phase 4 — Interoperability, Transport, and Tool Catalog (OUTLINE)
-
 - Protocol adapters (HTTP/gRPC) for remote agents; envelope mapping; auth/policy.
 - Tool definitions library; extended sandboxing; simple trace UI.
 - Alignment ritual after each batch.
 
 ## Phase 5 — Scale, Packaging, and Release (OUTLINE)
-
 - Packaging (wheels/binaries), CI/CD; reproducible builds; docs/ADRs finalized; performance tuning; multi-project orchestration.
 - Alignment ritual after each batch.
 
 ---
 
 ## Cross-Cutting References
-
 - Blueprint sections to re-check frequently:
   - Specialized Sub-Agents; Context Engine; Message Schemas; Orchestrator responsibilities; Determinism and planning; Performance SLOs.
 - Vesper files routinely referenced:
