@@ -47,7 +47,7 @@ def test_retry_backoff() -> None:
   o._scheduler._backoff_fn = lambda n: 0.01  # type: ignore[attr-defined]
   o._scheduler.start(flaky_handler, router=o._route_agent)  # type: ignore[attr-defined]
 
-  task = {"type": "AgentTask", "id": "t-retry", "agent": "TestAgent", "payload": {"mode": "generate"}}
+  task = {"type": "AgentTask", "id": "t-retry", "agent": "TestAgent", "payload": {"mode": "generate", "target": "x"}}
   o.submit_task(task)
   # Wait for retries (2 * 10ms plus processing)
   time.sleep(0.08)
@@ -70,7 +70,7 @@ def test_budget_enforcement() -> None:
   o._scheduler.start(slow_handler, router=o._route_agent)  # type: ignore[attr-defined]
 
   # Budget smaller than handler duration -> should drop without retry
-  task = {"type": "AgentTask", "id": "t-b", "agent": "TestAgent", "payload": {"mode": "generate"}, "constraints": {"timeoutMs": 10}}
+  task = {"type": "AgentTask", "id": "t-b", "agent": "TestAgent", "payload": {"mode": "generate", "target": "y"}, "constraints": {"timeoutMs": 10}}
   out = o.submit_task(task)
   assert out["accepted"] is True
   # Give time to process
