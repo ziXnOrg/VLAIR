@@ -23,9 +23,9 @@
 | 19 | Structured docs & persistence | Add DiffSummaryDocument/CoverageHintDocument and ContextStore helpers; integrate in orchestrator | Principal Eng | Medium | Completed | 2025-10-26 | 2025-10-26 | orchestrator/context/models.py; orchestrator/core/orchestrator.py |
 | 20 | CLI redaction config | Add CLI flags/env display for redaction prefixes/fields; docs/examples | Principal Eng | Medium | Completed | 2025-10-27 | 2025-10-27 | cli/orchestrator_cli.py; SECURITY.md |
 | 21 | Markdownlint enforcement | Integrate markdownlint in pre-commit; fix warnings | Principal Eng | Medium | In Progress | 2025-10-27 | 2025-10-27 | .pre-commit-config.yaml; .markdownlint.json |
-| 22 | Benches in CI | Wire benches to CI thresholds; publish timing artifacts | Principal Eng | Medium | Pending | 2025-10-27 | 2025-10-28 | bench/context/* |
-| 23 | E2E dispatch review | Add end-to-end dispatch test and perform code review | Principal Eng | Medium | Pending | 2025-10-27 | 2025-10-28 | tests/integration/* |
-| 24 | README cross-links | Add redaction/query CLI usage cross-links | Principal Eng | Low | Pending | 2025-10-27 | 2025-10-28 | README.md |
+| 22 | Benches in CI | Wire benches to CI thresholds; publish timing artifacts | Principal Eng | Medium | Completed | 2025-10-27 | 2025-10-28 | bench/context/* |
+| 23 | E2E dispatch review | Add end-to-end dispatch test and perform code review | Principal Eng | Medium | Completed | 2025-10-27 | 2025-10-28 | tests/integration/* |
+| 24 | README cross-links | Add redaction/query CLI usage cross-links | Principal Eng | Low | In Progress | 2025-10-27 | 2025-10-28 | README.md |
 
 Notes:
 - All tasks must follow the Production Agentic Workflow (Understanding -> Planning -> Context -> Implementation -> Verification -> Reflection) and re-check Blueprint + rules at batch end.
