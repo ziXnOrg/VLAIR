@@ -25,7 +25,14 @@
 | 21 | Markdownlint enforcement | Integrate markdownlint in pre-commit; fix warnings | Principal Eng | Medium | In Progress | 2025-10-27 | 2025-10-27 | .pre-commit-config.yaml; .markdownlint.json |
 | 22 | Benches in CI | Wire benches to CI thresholds; publish timing artifacts | Principal Eng | Medium | Completed | 2025-10-27 | 2025-10-28 | bench/context/* |
 | 23 | E2E dispatch review | Add end-to-end dispatch test and perform code review | Principal Eng | Medium | Completed | 2025-10-27 | 2025-10-28 | tests/integration/* |
-| 24 | README cross-links | Add redaction/query CLI usage cross-links | Principal Eng | Low | In Progress | 2025-10-27 | 2025-10-28 | README.md |
+| 24 | README cross-links | Add redaction/query CLI usage cross-links | Principal Eng | Low | Completed | 2025-10-27 | 2025-10-28 | README.md |
+| 25 | P2-2.1 Agent interfaces | Finalize agent interfaces and registry | Principal Eng | High | In Progress | 2025-10-27 | 2025-10-29 | agents/{base.py}, orchestrator/core/registry.py |
+| 26 | P2-2.2 CodeGenAgent specifics | Define workflow specifics and prompts | Principal Eng | Medium | Pending | 2025-10-27 | 2025-10-30 | agents/codegen.py; P2/notes/* |
+| 27 | P2-2.3 TestGen flow | Implement generation flow and payloads | Principal Eng | Medium | Pending | 2025-10-27 | 2025-10-30 | agents/test_agent.py |
+| 28 | P2-2.4 TestExec sandbox | Implement sandboxed execution and logs | Principal Eng | Medium | Pending | 2025-10-27 | 2025-10-31 | exec/sandbox.py |
+| 29 | P2-2.5 StaticAnalysis validators | Harden findings schema/validators | Principal Eng | Medium | Pending | 2025-10-27 | 2025-10-31 | orchestrator/schemas/* |
+| 30 | P2-2.6 DebugAgent loop | Implement debug loop for failing tests | Principal Eng | Medium | Pending | 2025-10-27 | 2025-10-31 | agents/debug.py |
+| 31 | P2-2.7/2.8 E2E workflows | Add workflows and validation gates | Principal Eng | High | Pending | 2025-10-27 | 2025-11-02 | tests/integration/* |
 
 Notes:
 - All tasks must follow the Production Agentic Workflow (Understanding -> Planning -> Context -> Implementation -> Verification -> Reflection) and re-check Blueprint + rules at batch end.
