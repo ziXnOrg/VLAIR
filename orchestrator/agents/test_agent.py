@@ -9,40 +9,32 @@ class TestAgent(Agent):
   def __init__(self) -> None:
     super().__init__("TestAgent")
 
-  def run(self, task: Dict[str, Any]) -> Dict[str, Any]:
-    mode = task.get("payload", {}).get("mode", "")
+  def run(self, task: Dict[str, Any], ctx: Any | None = None) -> Dict[str, Any]:
+    payload = task.get("payload", {})
+    mode = payload.get("mode", "generate")
+    target = payload.get("target", payload.get("test", "all"))
     if mode == "execute":
-      test_name = task.get("payload", {}).get("test", "all")
+      test_name = payload.get("test", target)
       status = "pass"
-      # In real impl, would run and capture logs
+      # Deterministic execution stub; logs empty by default
+      artifacts = [
+        {"kind": "test_result", "test_name": test_name, "status": status, "log": ""},
+        {"kind": "coverage_hint", "files": [f"{target}"], "line_rate": 0.75},
+      ]
       return {
         "type": "AgentResult",
         "id": f"res-{task.get('id','')}",
         "parentId": task.get("id", ""),
         "agent": self.name,
-        "payload": {
-          "artifacts": [
-            {
-              "kind": "test_result",
-              "test_name": test_name,
-              "status": status,
-              "log": ""
-            },
-            {
-              "kind": "coverage_hint",
-              "files": ["a.cpp"],
-              "line_rate": 0.75
-            }
-          ]
-        }
+        "payload": {"artifacts": artifacts},
       }
-    else:
-      return {
-        "type": "AgentResult",
-        "id": f"res-{task.get('id','')}",
-        "parentId": task.get("id", ""),
-        "agent": self.name,
-        "payload": {"artifacts": [{"kind": "test_gen", "target": task.get("payload", {}).get("target", "")}]} 
-      }
+    # generate
+    return {
+      "type": "AgentResult",
+      "id": f"res-{task.get('id','')}",
+      "parentId": task.get("id", ""),
+      "agent": self.name,
+      "payload": {"artifacts": [{"kind": "test_gen", "target": target}]},
+    }
 
 
