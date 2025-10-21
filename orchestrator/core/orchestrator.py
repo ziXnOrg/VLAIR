@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any, Dict, Optional, cast
+import time
 
 from orchestrator.schemas.validators import validate_agent_task, validate_agent_result
 from .scheduler import Scheduler, ScheduledTask
@@ -62,7 +63,12 @@ class Orchestrator:
 
   def _route_agent(self, task: Dict[str, Any]) -> str:
     agent = task.get("agent", "")
-    return self._registry.select_for(agent)
+    if agent:
+      info = self._registry.get(agent)
+      if info is None or info.status == "down" or (info.last_heartbeat and (time.time() - info.last_heartbeat) > 60):
+        raise ValueError(f"Requested agent '{agent}' not available")
+      return agent
+    return self._registry.select_for("")
 
   # --- Agent registry operations ---
   def register_agent(self, name: str, capabilities: list[str]) -> None:
