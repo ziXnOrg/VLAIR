@@ -73,15 +73,15 @@ jobs:
           python3 -m pip install --upgrade pip
           python3 -m pip install pytest
 
-      - name: Configure
-        run: cmake -S . -B build -DPYTHON_EXECUTABLE=$(which python3)
+      - name: Configure (fresh build dir)
+        run: cmake -S . -B build-ci -DPython3_EXECUTABLE=$(which python3)
 
       - name: Build
-        run: cmake --build build --config Release -- -j2
+        run: cmake --build build-ci --config Release -- -j2
 
       - name: Run CTest (unit + integration)
         run: |
-          cd build
+          cd build-ci
           ctest --output-on-failure
 
       - name: Upload CTest Log
@@ -89,4 +89,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ctest-log
-          path: build/Testing/Temporary/LastTest.log
+          path: build-ci/Testing/Temporary/LastTest.log
