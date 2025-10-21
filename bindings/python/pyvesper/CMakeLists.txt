@@ -48,3 +48,9 @@ add_test(
   COMMAND ${Python3_EXECUTABLE} -c "import pyvesper; e=pyvesper.Engine(); print('ok')"
 )
 
+# Ensure Python can import the freshly built module
+set_tests_properties(pyvesper_import PROPERTIES
+  WORKING_DIRECTORY $<TARGET_FILE_DIR:pyvesper>
+  ENVIRONMENT "PYTHONPATH=$<TARGET_FILE_DIR:pyvesper>"
+)
+
