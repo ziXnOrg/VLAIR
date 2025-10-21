@@ -9,10 +9,12 @@ class CodeGenAgent(Agent):
   def __init__(self) -> None:
     super().__init__("CodeGenAgent")
 
-  def run(self, task: Dict[str, Any]) -> Dict[str, Any]:
+  def run(self, task: Dict[str, Any], ctx: Any | None = None) -> Dict[str, Any]:
     payload = task.get("payload", {})
     target = payload.get("target", "")
-    # Produce AgentResult-shaped dict with diff summary and hints
+    action = payload.get("action", payload.get("mode", "create"))
+    # Deterministic content derived from inputs (no randomness)
+    content = f"/* generated:{action}:{target} */\n"
     diff_summary = {
       "insertions": 1,
       "deletions": 0,
@@ -27,7 +29,7 @@ class CodeGenAgent(Agent):
         "delta": {
           "doc": {
             "path": target,
-            "content": "/* generated */\n",
+            "content": content,
           }
         },
         "artifacts": [
