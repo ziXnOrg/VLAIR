@@ -79,14 +79,30 @@ jobs:
       - name: Build
         run: cmake --build build-ci --config Release -- -j2
 
-      - name: Run CTest (unit + integration)
+      - name: List CTest tests
         run: |
           cd build-ci
-          ctest --output-on-failure
+          ctest -N || true
+
+      - name: Run CTest (verbose)
+        run: |
+          cd build-ci
+          set -o pipefail
+          ctest -VV --output-on-failure | tee ctest-output.txt
+
+      - name: Print CTest log
+        if: always()
+        run: |
+          if [ -f build-ci/Testing/Temporary/LastTest.log ]; then
+            echo "----- LastTest.log -----"
+            sed -n '1,400p' build-ci/Testing/Temporary/LastTest.log || true
+          fi
 
       - name: Upload CTest Log
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ctest-log
-          path: build-ci/Testing/Temporary/LastTest.log
+          path: |
+            build-ci/Testing/Temporary/LastTest.log
+            build-ci/ctest-output.txt
