@@ -5,6 +5,8 @@
 - Redaction Policy and Usage: see `SECURITY.md`.
 - CLI Redaction Flags: `--redact-prefix`, `--redact-fields` in `cli/orchestrator_cli.py`.
 - Structured Query CLI: `orchestrator query` (dry-run via `VLTAIR_TEST_MODE=1`).
+- Implementation Plan: `Docs/ImplementationPlan.md` (phased roadmap; acceptance criteria).
+- Production Workflow: `Docs/production-agentic-workflow.md`.
 
 ## CLI Examples
 
@@ -54,5 +56,7 @@ set VLTAIR_REDACT_FIELDS=analysis.details,test_result.log
 - Blueprint: `Docs/Blueprint.md`
 - Production Workflow: `Docs/production-agentic-workflow.md`
 - Implementation Plan: `Docs/ImplementationPlan.md`
+- SECURITY: `SECURITY.md`
+- CLI: `cli/orchestrator_cli.py`
 - Cursor Rules: `.cursor/rules/`
 
