@@ -21,7 +21,7 @@ def _ensure_pyvesper_on_path() -> None:
   try:
     import pyvesper  # noqa: F401
   except Exception:
-    pytest.skip("pyvesper not importable; build the extension first")
+    pytest.skip("pyvesper not importable; build the extension first", allow_module_level=True)
 
 
 _ensure_pyvesper_on_path()
