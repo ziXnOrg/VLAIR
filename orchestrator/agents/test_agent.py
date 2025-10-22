@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any, Dict
 
 from .base import Agent
+from orchestrator.obs.redaction import sanitize_text
 
 
 class TestAgent(Agent):
@@ -16,9 +17,21 @@ class TestAgent(Agent):
     if mode == "execute":
       test_name = payload.get("test", target)
       status = "pass"
-      # Deterministic execution stub; logs empty by default
+      # Optionally execute via sandbox when 'paths' provided
+      log = ""
+      try:
+        paths = payload.get("paths")
+        if isinstance(paths, list) and paths:
+          from exec.sandbox import run_pytests
+          rc, out = run_pytests(paths, timeout_s=int(payload.get("timeout_s", 30)))
+          status = "pass" if rc == 0 else ("timeout" if rc == 124 else "fail")
+          log = sanitize_text(out)
+      except Exception:
+        # Fallback to deterministic stub on sandbox error
+        status = "fail"
+        log = "sandbox error"
       artifacts = [
-        {"kind": "test_result", "test_name": test_name, "status": status, "log": ""},
+        {"kind": "test_result", "test_name": test_name, "status": status, "log": log},
         {"kind": "coverage_hint", "files": [f"{target}"], "line_rate": 0.75},
       ]
       return {
