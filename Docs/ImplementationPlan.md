@@ -270,6 +270,9 @@ CLI examples:
 
 - CI gates:
   - Coverage >= 85%; artifacts attached; determinism logs present
+  - Coverage enforced in CI via pytest-cov: `--cov=orchestrator --cov=cli --cov-fail-under=85` with XML output (`coverage.xml`).
+  - Test artifacts uploaded: `test-artifacts` (contains `coverage.xml`, `build-ci/ctest-output.txt`, `build-ci/Testing/Temporary/LastTest.log`).
+  - Benchmark artifacts uploaded: `benchmark-results` (`bench_hybrid.json`, `bench_upsert.json`) with simple threshold checks.
 - Bench:
   - End-to-end timings; token/runtime budgets recorded
 - CLI examples:
