@@ -73,13 +73,21 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y cmake python3 python3-pip
           python3 -m pip install --upgrade pip
-          python3 -m pip install pytest "pydantic>=1.10,<3"
+          python3 -m pip install pytest pytest-cov "pydantic>=1.10,<3"
 
       - name: Configure (fresh build dir)
         run: cmake -S . -B build-ci -DPython3_EXECUTABLE=$(which python3)
 
       - name: Build
         run: cmake --build build-ci --config Release -- -j2
+
+      - name: Python Coverage (pytest-cov)
+        run: |
+          python3 -m pytest -q \
+            --cov=orchestrator --cov=cli \
+            --cov-report=term --cov-report=xml:coverage.xml \
+            --cov-fail-under=85 \
+            tests/unit tests/integration
 
       - name: List CTest tests
         run: |
@@ -100,11 +108,12 @@ jobs:
             sed -n '1,400p' build-ci/Testing/Temporary/LastTest.log || true
           fi
 
-      - name: Upload CTest Log
+      - name: Upload CTest Log and Coverage
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ctest-log
+          name: test-artifacts
           path: |
             build-ci/Testing/Temporary/LastTest.log
             build-ci/ctest-output.txt
+            coverage.xml
