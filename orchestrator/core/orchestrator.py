@@ -22,6 +22,7 @@ class Orchestrator:
     self._registry.register("CodeGenAgent", ["codegen"]) 
     self._registry.register("TestAgent", ["testgen", "testexec"]) 
     self._registry.register("StaticAnalysisAgent", ["analysis"]) 
+    self._registry.register("DebugAgent", ["debug"]) 
     self._agent_handlers: Dict[str, Any] = {
       "CodeGenAgent": CodeGenAgent().run,
       "TestAgent": TestAgent().run,
