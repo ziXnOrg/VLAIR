@@ -9,6 +9,7 @@ from .registry import AgentRegistry
 from orchestrator.agents.codegen import CodeGenAgent
 from orchestrator.agents.test_agent import TestAgent
 from orchestrator.agents.static_analysis import StaticAnalysisAgent
+from orchestrator.agents.debug_agent import DebugAgent
 from orchestrator.context.context_store import ContextStore
 from orchestrator.context.models import CodeDocument
 from orchestrator.obs.redaction import sanitize_text, sanitize_artifact
@@ -25,6 +26,7 @@ class Orchestrator:
       "CodeGenAgent": CodeGenAgent().run,
       "TestAgent": TestAgent().run,
       "StaticAnalysisAgent": StaticAnalysisAgent().run,
+      "DebugAgent": DebugAgent().run,
     }
     self._scheduler = Scheduler(max_concurrency=2)
     self._scheduler.start(self._handle_scheduled, router=self._route_agent)
