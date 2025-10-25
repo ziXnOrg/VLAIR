@@ -33,3 +33,27 @@ def test_context_store_add_diff_and_coverage_use_backend_add():
   assert "files" in meta[0]
 
 
+
+
+
+def test_context_store_add_code_documents_length_mismatch_raises() -> None:
+  from orchestrator.context.context_store import ContextStore
+  from orchestrator.context.models import CodeDocument
+  fake_backend = MagicMock()
+  store = ContextStore(backend=fake_backend)
+  docs = [CodeDocument(id=1, path="a", language="", content="", metadata={"origin":"x"})]
+  # vectors length differs -> ValueError
+  import pytest
+  with pytest.raises(ValueError):
+    store.add_code_documents(docs, [])
+
+
+def test_context_store_add_text_documents_length_mismatch_raises() -> None:
+  from orchestrator.context.context_store import ContextStore
+  from orchestrator.context.models import TextDocument
+  fake_backend = MagicMock()
+  store = ContextStore(backend=fake_backend)
+  docs = [TextDocument(id=2, title="t", content="c", metadata={"origin":"x"})]
+  import pytest
+  with pytest.raises(ValueError):
+    store.add_text_documents(docs, [])
