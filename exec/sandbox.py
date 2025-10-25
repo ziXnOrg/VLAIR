@@ -407,6 +407,9 @@ def run_pytests_v2(
   # Phase 2 feature flags are read dynamically to support tests that toggle via env
   enable_cg = (os.getenv("VLTAIR_SANDBOX_ENABLE_CGROUPS_V2", "0") == "1")
   enable_rt = (os.getenv("VLTAIR_SANDBOX_ENABLE_RESTRICTED_TOKEN", "0") == "1")
+  enable_seccomp = (os.getenv("VLTAIR_SANDBOX_ENABLE_SECCOMP", "0") == "1")
+  enable_rlaunch = (os.getenv("VLTAIR_SANDBOX_ENABLE_RESTRICTED_LAUNCH", "0") == "1")
+
 
   enforced: Dict[str, Any] = {
     "platform": platform.system(),
@@ -431,6 +434,14 @@ def run_pytests_v2(
       "applied": False,
       "reason": "",
     },
+    "phase3": {
+      "policy_kind": "none",
+      "enabled": bool(enable_seccomp or enable_rlaunch),
+      "effective": False,
+      "fallback_reason": "",
+      "version": 0,
+    },
+
   }
 
   # Start process with platform-specific enforcement

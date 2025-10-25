@@ -45,15 +45,13 @@ def main() -> int:
     os.environ["VLTAIR_REDACT_FIELDS"] = args.redact_fields
 
   if args.cmd == "run":
-    data = None
-    if args.file:
-      with open(args.file, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    else:
-      data = json.load(sys.stdin)
-
     o = Orchestrator()
     try:
+      if args.file:
+        with open(args.file, "r", encoding="utf-8") as f:
+          data = json.load(f)
+      else:
+        data = json.load(sys.stdin)
       out = o.submit_task(data)
       print(json.dumps({"ok": True, **out}))
       return 0
@@ -77,7 +75,11 @@ def main() -> int:
     for k, v in os.environ.items():
       if k.startswith("VLTAIR_REDACT_FIELDS_") and k != "VLTAIR_REDACT_FIELDS_":
         kind_fields[k] = v
-    print(json.dumps({"ok": True, "agents": agents, "redaction": {"prefixes": prefixes, "fields": fields, "kindFields": kind_fields}}))
+    # Sandbox Phase 3 flags (deterministic reporting)
+    seccomp_flag = (os.environ.get("VLTAIR_SANDBOX_ENABLE_SECCOMP", "0") == "1")
+    rlaunch_flag = (os.environ.get("VLTAIR_SANDBOX_ENABLE_RESTRICTED_LAUNCH", "0") == "1")
+
+    print(json.dumps({"ok": True, "agents": agents, "redaction": {"prefixes": prefixes, "fields": fields, "kindFields": kind_fields}, "sandbox": {"phase3": {"flags": {"linux_seccomp": seccomp_flag, "windows_restricted_launch": rlaunch_flag}, "effective": False, "policy_kind": "none", "version": 0}}}))
     return 0
   elif args.cmd == "register":
     o = Orchestrator()
