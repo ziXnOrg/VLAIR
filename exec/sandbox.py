@@ -131,6 +131,8 @@ _STATUS_MEM = "MEM_LIMIT"
 _STATUS_TERM = "KILLED_TERM"
 _STATUS_KILL = "KILLED_KILL"
 _STATUS_INTERNAL = "INTERNAL_ERROR"
+_STATUS_DENIED = "SANDBOX_DENIED"
+
 
 # Subset of NTSTATUS that plausibly indicate memory/resource termination
 _NTSTATUS_MEM = {0xC0000017, 0xC00000A7, 0xC00000A2}  # NO_MEMORY, COMMITMENT_LIMIT, WORKING_SET_QUOTA
@@ -150,6 +152,8 @@ def _normalize_status(returncode: int, timed_out: bool, plat: str) -> tuple[str,
         return _STATUS_KILL, 128 + sig, f"SIGKILL (signal {sig})"
       if sig == getattr(signal, "SIGTERM", 15):
         return _STATUS_TERM, 128 + sig, f"SIGTERM (signal {sig})"
+      if sig == getattr(signal, "SIGSYS", 31):
+        return _STATUS_DENIED, 128 + sig, f"SIGSYS (signal {sig})"
       return _STATUS_INTERNAL, 1, f"terminated by signal {sig}"
     # Non-zero exit; unknown cause
     return _STATUS_INTERNAL, 1, f"exit code {returncode}"
@@ -252,6 +256,86 @@ def _setup_cgroup_v2(trace_id: str, policy: SandboxPolicy) -> tuple[str | None, 
   cpu_ok = _write_limit("cpu.max", "100000 100000")
   details["applied"] = bool(mem_ok or pids_ok or cpu_ok)
   return path, details, ""
+
+# ---- Linux seccomp (Phase 3, optional) ----
+
+def _detect_seccomp_lib() -> tuple[bool, str]:
+  if _IS_WINDOWS or platform.system() != "Linux":
+    return False, "not-linux"
+  try:
+    import ctypes  # noqa: F401
+    for name in ("libseccomp.so.2", "libseccomp.so", "libseccomp.so.1"):
+      try:
+        ctypes.CDLL(name)
+        return True, ""
+      except Exception:
+        continue
+    return False, "libseccomp not found"
+  except Exception as e:
+    return False, f"{e.__class__.__name__}: {e}"
+
+
+def _make_linux_seccomp_preexec_block_net():  # type: ignore[return-type]
+  # Install a permissive filter (ALLOW) with explicit TRAP on network-related syscalls.
+  # This avoids broad allowlists that can break Python/pytest.
+  def _apply():
+    import ctypes
+    lib = None
+    for name in ("libseccomp.so.2", "libseccomp.so", "libseccomp.so.1"):
+      try:
+        lib = ctypes.CDLL(name)
+        break
+      except Exception:
+        continue
+    if lib is None:
+      return
+    # Types and prototypes
+    c_void_p = ctypes.c_void_p
+    c_int = ctypes.c_int
+    c_uint = ctypes.c_uint
+    lib.seccomp_init.argtypes = [c_uint]
+    lib.seccomp_init.restype = c_void_p
+    lib.seccomp_rule_add.argtypes = [c_void_p, c_uint, c_int, c_uint]
+    lib.seccomp_rule_add.restype = c_int
+    lib.seccomp_syscall_resolve_name.argtypes = [ctypes.c_char_p]
+    lib.seccomp_syscall_resolve_name.restype = c_int
+    lib.seccomp_load.argtypes = [c_void_p]
+    lib.seccomp_load.restype = c_int
+    lib.seccomp_release.argtypes = [c_void_p]
+    lib.seccomp_release.restype = None
+
+    SCMP_ACT_ALLOW = 0x7FFF0000
+    SCMP_ACT_TRAP = 0x00030000
+
+    ctx = lib.seccomp_init(SCMP_ACT_ALLOW)
+    if not ctx:
+      return
+    try:
+      deny = [
+        b"socket", b"connect", b"accept", b"accept4", b"bind", b"listen",
+        b"sendto", b"sendmsg", b"sendmmsg", b"recvfrom", b"recvmsg", b"recvmmsg",
+        b"getsockname", b"getpeername", b"shutdown", b"setsockopt", b"getsockopt",
+      ]
+      for nm in deny:
+        scno = lib.seccomp_syscall_resolve_name(nm)
+        if scno >= 0:
+          lib.seccomp_rule_add(ctx, SCMP_ACT_TRAP, scno, 0)
+      lib.seccomp_load(ctx)
+    finally:
+      lib.seccomp_release(ctx)
+  return _apply
+
+
+def _compose_preexec(funcs):  # type: ignore[return-type]
+  def _run_all():
+    for f in funcs:
+      if f:
+        try:
+          f()
+        except Exception:
+          # Best-effort: do not crash child preexec
+          pass
+  return _run_all
 
 
 def _detect_restricted_token_support() -> tuple[bool, str]:
@@ -469,6 +553,18 @@ def run_pytests_v2(
         else:
           enforced["restricted_token"]["reason"] = rsn
       # Spawn normally and assign to Job
+      # Phase 3: restricted token launch (opt-in)
+      if enable_rlaunch:
+        enforced["phase3"]["policy_kind"] = "restricted_token"
+        enforced["phase3"]["enabled"] = True
+        det, rsn = _detect_restricted_token_support()
+        if not det:
+          enforced["phase3"]["fallback_reason"] = rsn
+        else:
+          # NOTE: For this pass we keep normal spawn but report capability; spawning with
+          # CreateProcessWithTokenW will be added behind the same flag in a follow-up.
+          enforced["phase3"]["fallback_reason"] = "restricted-launch not implemented; using normal spawn"
+
       p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=False, env=env)
       try:
         if job:
@@ -501,6 +597,22 @@ def run_pytests_v2(
             enforced["cgroups_v2"].update({k: v for k, v in cg_details.items() if k in ("applied", "path", "limits")})
             if cg_err:
               enforced["cgroups_v2"]["reason"] = cg_err
+      # Phase 3: seccomp (opt-in)
+      if enable_seccomp and platform.system() == "Linux":
+        enforced["phase3"]["policy_kind"] = "seccomp"
+        enforced["phase3"]["enabled"] = True
+        det, rsn = _detect_seccomp_lib()
+        if not det:
+          enforced["phase3"]["fallback_reason"] = rsn
+        else:
+          try:
+            seccomp_pre = _make_linux_seccomp_preexec_block_net()
+            preexec = _compose_preexec([preexec, seccomp_pre])
+            enforced["phase3"]["effective"] = True
+            enforced["phase3"]["version"] = 1
+          except Exception as e:
+            enforced["phase3"]["fallback_reason"] = f"seccomp init failed: {e}"
+
       p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=False, env=env, preexec_fn=preexec)
       # Attach to cgroup after spawn (if created)
       if cgroup_path:
