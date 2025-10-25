@@ -34,3 +34,16 @@ def test_cli_status_shows_redaction_settings(prefixes: List[str], fields: Option
   # Fields echo back
   expected_fields = fields if fields is not None else ""
   assert out["redaction"]["fields"] == expected_fields
+
+
+
+def test_cli_status_kind_specific_fields_echo(monkeypatch) -> None:
+  # Ensure kind-specific env vars get surfaced in status output
+  monkeypatch.setenv("VLTAIR_REDACT_FIELDS_BUILD", "secrets.token,meta.apiKey")
+  proc = subprocess.run([sys.executable, "-m", "cli.orchestrator_cli", "status"], capture_output=True, text=True)
+  assert proc.returncode == 0
+  data = json.loads(proc.stdout)
+  assert data.get("ok") is True
+  kinds = data.get("redaction", {}).get("kindFields", {})
+  assert "VLTAIR_REDACT_FIELDS_BUILD" in kinds
+  assert kinds["VLTAIR_REDACT_FIELDS_BUILD"] == "secrets.token,meta.apiKey"
