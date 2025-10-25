@@ -220,6 +220,12 @@ def test_phase3_windows_restricted_launch_applies(tmp_path, monkeypatch) -> None
   if platform.system() != "Windows":
     pytest.skip("Windows-only (restricted launch)")
   from exec import sandbox as sbx
+  det, rsn = sbx._detect_restricted_token_support()
+  if not det:
+    pytest.skip(f"Restricted token not supported: {rsn}")
+  ok, prep = sbx._win_try_create_restricted_token()
+  if not ok:
+    pytest.skip(f"Cannot create restricted token: {prep}")
   monkeypatch.setenv("VLTAIR_SANDBOX_ENABLE_RESTRICTED_LAUNCH", "1")
   test_file = tmp_path / "test_ok_win.py"
   test_file.write_text("""
@@ -228,7 +234,6 @@ def test_ok():
   assert True
 """)
   res = sbx.run_pytests_v2([str(test_file)], policy=sbx.SandboxPolicy(wall_time_s=5))
-  # Expected once implemented: restricted launch is effective (RED for now)
   assert res.get("enforced", {}).get("phase3", {}).get("effective") is True
 
 

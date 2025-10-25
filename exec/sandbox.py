@@ -472,6 +472,210 @@ if _IS_WINDOWS:
       return job, enforced, f"job config error: {e}"
 
 
+  def _win_spawn_with_restricted_token(cmd: list[str], env: dict[str, str], job: HANDLE | None, cwd: str | None):
+    """Spawn a child process with a restricted primary token using CreateProcessWithTokenW.
+    Returns an object with .stdout/.stderr file objects and .wait(timeout)->rc semantics.
+    Raises RuntimeError on failure with a deterministic message.
+    """
+    import os as _os
+    import subprocess as _sp
+    import msvcrt as _msvcrt
+    import ctypes
+    import ctypes.wintypes as wt
+
+    adv = ctypes.WinDLL("advapi32", use_last_error=True)
+    k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+
+    # --- Structs ---
+    class SECURITY_ATTRIBUTES(ctypes.Structure):
+      _fields_ = [("nLength", wt.DWORD), ("lpSecurityDescriptor", ctypes.c_void_p), ("bInheritHandle", wt.BOOL)]
+
+    class STARTUPINFOW(ctypes.Structure):
+      _fields_ = [
+        ("cb", wt.DWORD), ("lpReserved", wt.LPWSTR), ("lpDesktop", wt.LPWSTR), ("lpTitle", wt.LPWSTR),
+        ("dwX", wt.DWORD), ("dwY", wt.DWORD), ("dwXSize", wt.DWORD), ("dwYSize", wt.DWORD),
+        ("dwXCountChars", wt.DWORD), ("dwYCountChars", wt.DWORD), ("dwFillAttribute", wt.DWORD),
+        ("dwFlags", wt.DWORD), ("wShowWindow", wt.WORD), ("cbReserved2", wt.WORD), ("lpReserved2", ctypes.c_void_p),
+        ("hStdInput", wt.HANDLE), ("hStdOutput", wt.HANDLE), ("hStdError", wt.HANDLE),
+      ]
+
+    class PROCESS_INFORMATION(ctypes.Structure):
+      _fields_ = [("hProcess", wt.HANDLE), ("hThread", wt.HANDLE), ("dwProcessId", wt.DWORD), ("dwThreadId", wt.DWORD)]
+
+    # --- Constants ---
+    TOKEN_ASSIGN_PRIMARY = 0x0001
+    TOKEN_DUPLICATE = 0x0002
+    TOKEN_QUERY = 0x0008
+    DISABLE_MAX_PRIVILEGE = 0x0001
+
+    LOGON_WITH_PROFILE = 0x00000001
+    CREATE_UNICODE_ENVIRONMENT = 0x00000400
+    STARTF_USESTDHANDLES = 0x00000100
+
+    HANDLE_FLAG_INHERIT = 0x00000001
+    INFINITE = 0xFFFFFFFF
+    WAIT_OBJECT_0 = 0x00000000
+    WAIT_TIMEOUT = 0x00000102
+
+    # --- Prototypes ---
+    OpenProcessToken = adv.OpenProcessToken
+    OpenProcessToken.argtypes = [wt.HANDLE, wt.DWORD, ctypes.POINTER(wt.HANDLE)]
+    OpenProcessToken.restype = wt.BOOL
+
+    GetCurrentProcess = k32.GetCurrentProcess
+    GetCurrentProcess.argtypes = []
+    GetCurrentProcess.restype = wt.HANDLE
+
+    CreateRestrictedToken = adv.CreateRestrictedToken
+    CreateRestrictedToken.argtypes = [wt.HANDLE, wt.DWORD, wt.DWORD, ctypes.c_void_p, wt.DWORD, ctypes.c_void_p, wt.DWORD, ctypes.c_void_p, ctypes.POINTER(wt.HANDLE)]
+    CreateRestrictedToken.restype = wt.BOOL
+
+    DuplicateTokenEx = getattr(adv, "DuplicateTokenEx", None)
+    if DuplicateTokenEx:
+      DuplicateTokenEx.argtypes = [wt.HANDLE, wt.DWORD, ctypes.POINTER(SECURITY_ATTRIBUTES), wt.DWORD, wt.DWORD, ctypes.POINTER(wt.HANDLE)]
+      DuplicateTokenEx.restype = wt.BOOL
+
+    CreateProcessWithTokenW = adv.CreateProcessWithTokenW
+    CreateProcessWithTokenW.argtypes = [wt.HANDLE, wt.DWORD, wt.LPCWSTR, wt.LPWSTR, wt.DWORD, ctypes.c_void_p, wt.LPCWSTR, ctypes.POINTER(STARTUPINFOW), ctypes.POINTER(PROCESS_INFORMATION)]
+    CreateProcessWithTokenW.restype = wt.BOOL
+
+    CreatePipe = k32.CreatePipe
+    CreatePipe.argtypes = [ctypes.POINTER(wt.HANDLE), ctypes.POINTER(wt.HANDLE), ctypes.POINTER(SECURITY_ATTRIBUTES), wt.DWORD]
+    CreatePipe.restype = wt.BOOL
+
+    SetHandleInformation = k32.SetHandleInformation
+    SetHandleInformation.argtypes = [wt.HANDLE, wt.DWORD, wt.DWORD]
+    SetHandleInformation.restype = wt.BOOL
+
+    GetStdHandle = k32.GetStdHandle
+    GetStdHandle.argtypes = [wt.DWORD]
+    GetStdHandle.restype = wt.HANDLE
+
+    WaitForSingleObject = k32.WaitForSingleObject
+    WaitForSingleObject.argtypes = [wt.HANDLE, wt.DWORD]
+    WaitForSingleObject.restype = wt.DWORD
+
+    GetExitCodeProcess = k32.GetExitCodeProcess
+    GetExitCodeProcess.argtypes = [wt.HANDLE, ctypes.POINTER(wt.DWORD)]
+    GetExitCodeProcess.restype = wt.BOOL
+
+    CloseHandle = k32.CloseHandle
+    CloseHandle.argtypes = [wt.HANDLE]
+    CloseHandle.restype = wt.BOOL
+
+    AssignProcessToJobObject = _AssignProcessToJobObject  # reuse bound symbol
+
+    def _fail(msg: str) -> RuntimeError:
+      gle = ctypes.get_last_error() or 0
+      return RuntimeError(f"{msg} (GLE={gle})")
+
+    # --- Build pipes (stdout/stderr) ---
+    sa = SECURITY_ATTRIBUTES(wt.DWORD(ctypes.sizeof(SECURITY_ATTRIBUTES)), None, wt.BOOL(True))
+    h_out_r, h_out_w = wt.HANDLE(), wt.HANDLE()
+    h_err_r, h_err_w = wt.HANDLE(), wt.HANDLE()
+    if not CreatePipe(ctypes.byref(h_out_r), ctypes.byref(h_out_w), ctypes.byref(sa), 0):
+      raise _fail("CreatePipe stdout failed")
+    if not CreatePipe(ctypes.byref(h_err_r), ctypes.byref(h_err_w), ctypes.byref(sa), 0):
+      # cleanup stdout pipe
+      CloseHandle(h_out_r); CloseHandle(h_out_w)
+      raise _fail("CreatePipe stderr failed")
+    # Parent read ends must be non-inheritable
+    SetHandleInformation(h_out_r, HANDLE_FLAG_INHERIT, 0)
+    SetHandleInformation(h_err_r, HANDLE_FLAG_INHERIT, 0)
+
+    # --- Create restricted primary token ---
+    hTok = wt.HANDLE()
+    if not OpenProcessToken(GetCurrentProcess(), TOKEN_ASSIGN_PRIMARY | TOKEN_DUPLICATE | TOKEN_QUERY, ctypes.byref(hTok)):
+      # cleanup pipes
+      CloseHandle(h_out_r); CloseHandle(h_out_w); CloseHandle(h_err_r); CloseHandle(h_err_w)
+      raise _fail("OpenProcessToken failed")
+    newTok = wt.HANDLE()
+    if not CreateRestrictedToken(hTok, DISABLE_MAX_PRIVILEGE, 0, None, 0, None, 0, None, ctypes.byref(newTok)):
+      CloseHandle(hTok); CloseHandle(h_out_r); CloseHandle(h_out_w); CloseHandle(h_err_r); CloseHandle(h_err_w)
+      raise _fail("CreateRestrictedToken failed")
+    CloseHandle(hTok)
+
+    # Best-effort ensure primary token via DuplicateTokenEx if available
+    if DuplicateTokenEx:
+      primaryTok = wt.HANDLE()
+      # SecurityImpersonation=2, TokenPrimary=1
+      if not DuplicateTokenEx(newTok, TOKEN_ASSIGN_PRIMARY | TOKEN_QUERY, None, 2, 1, ctypes.byref(primaryTok)):
+        CloseHandle(newTok); CloseHandle(h_out_r); CloseHandle(h_out_w); CloseHandle(h_err_r); CloseHandle(h_err_w)
+        raise _fail("DuplicateTokenEx failed")
+      CloseHandle(newTok)
+      hToUse = primaryTok
+    else:
+      hToUse = newTok
+
+    # --- STARTUPINFO and environment ---
+    si = STARTUPINFOW()
+    si.cb = ctypes.sizeof(STARTUPINFOW)
+    si.dwFlags = STARTF_USESTDHANDLES
+    si.hStdInput = GetStdHandle(wt.DWORD(0xFFFFfff6))  # STD_INPUT_HANDLE(-10)
+    si.hStdOutput = h_out_w
+    si.hStdError = h_err_w
+
+    pi = PROCESS_INFORMATION()
+
+    # Command line and environment block
+    cmdline = _sp.list2cmdline(cmd)
+    cmdbuf = ctypes.create_unicode_buffer(cmdline)
+    # Deterministic environment block: sorted by key
+    items = sorted((k, env[k]) for k in env)
+    block = "\0".join([f"{k}={v}" for k, v in items]) + "\0\0"
+    envbuf = ctypes.create_unicode_buffer(block)
+
+    ok = CreateProcessWithTokenW(hToUse, LOGON_WITH_PROFILE, None, cmdbuf, CREATE_UNICODE_ENVIRONMENT, envbuf, cwd, ctypes.byref(si), ctypes.byref(pi))
+    # Child inherits write ends; parent must close them after spawn
+    CloseHandle(h_out_w); CloseHandle(h_err_w)
+    if not ok:
+      CloseHandle(hToUse); CloseHandle(h_out_r); CloseHandle(h_err_r)
+      raise _fail("CreateProcessWithTokenW failed")
+
+    # Assign to job if provided
+    try:
+      if job:
+        AssignProcessToJobObject(job, pi.hProcess)
+    except Exception:
+      pass
+
+    # Wrap read handles as binary file objects
+    fd_out = _msvcrt.open_osfhandle(int(h_out_r.value), 0)
+    fd_err = _msvcrt.open_osfhandle(int(h_err_r.value), 0)
+    f_out = _os.fdopen(fd_out, "rb", buffering=0)
+    f_err = _os.fdopen(fd_err, "rb", buffering=0)
+
+    class _WinProc:
+      def __init__(self, hProc, hTh, fout, ferr):
+        self._hProc = hProc; self._hTh = hTh
+        self.stdout = fout; self.stderr = ferr
+        self.returncode = None
+      def wait(self, timeout=None):
+        ms = INFINITE if timeout is None else int(max(0, timeout) * 1000)
+        res = WaitForSingleObject(self._hProc, ms)
+        if res == WAIT_TIMEOUT:
+          raise _sp.TimeoutExpired(cmd, timeout)
+        code = wt.DWORD()
+        if not GetExitCodeProcess(self._hProc, ctypes.byref(code)):
+          self.returncode = 1
+        else:
+          self.returncode = int(code.value)
+        # Close thread handle; keep process handle until kill/GC
+        try:
+          CloseHandle(self._hTh)
+        except Exception:
+          pass
+        return self.returncode
+      def kill(self):
+        # Best-effort terminate
+        try:
+          k32.TerminateProcess(self._hProc, 137)
+        except Exception:
+          pass
+
+    return _WinProc(pi.hProcess, pi.hThread, f_out, f_err)
+
+
 def run_pytests_v2(
   paths: List[str],
   policy: SandboxPolicy | None = None,
@@ -552,8 +756,8 @@ def run_pytests_v2(
             enforced["restricted_token"]["reason"] = prep_reason
         else:
           enforced["restricted_token"]["reason"] = rsn
-      # Spawn normally and assign to Job
       # Phase 3: restricted token launch (opt-in)
+      used_restricted = False
       if enable_rlaunch:
         enforced["phase3"]["policy_kind"] = "restricted_token"
         enforced["phase3"]["enabled"] = True
@@ -561,16 +765,21 @@ def run_pytests_v2(
         if not det:
           enforced["phase3"]["fallback_reason"] = rsn
         else:
-          # NOTE: For this pass we keep normal spawn but report capability; spawning with
-          # CreateProcessWithTokenW will be added behind the same flag in a follow-up.
-          enforced["phase3"]["fallback_reason"] = "restricted-launch not implemented; using normal spawn"
+          try:
+            p = _win_spawn_with_restricted_token(cmd, env, job, None)
+            enforced["phase3"]["effective"] = True
+            enforced["phase3"]["version"] = 1
+            used_restricted = True
+          except Exception as e:
+            enforced["phase3"]["fallback_reason"] = f"{e}"
 
-      p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=False, env=env)
-      try:
-        if job:
-          _AssignProcessToJobObject(job, HANDLE(p._handle))  # type: ignore[attr-defined]
-      except Exception:
-        pass
+      if not used_restricted:
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=False, env=env)
+        try:
+          if job:
+            _AssignProcessToJobObject(job, HANDLE(p._handle))  # type: ignore[attr-defined]
+        except Exception:
+          pass
     else:
       # Unix branch (and Windows when jobs are explicitly disabled): preexec rlimits + optional cgroups v2
       preexec = None
