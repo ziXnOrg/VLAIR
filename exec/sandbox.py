@@ -64,7 +64,7 @@ def _build_env(base: Mapping[str, str], env_overrides: Dict[str, str] | None = N
     env.update(env_overrides)
   return env
 
-# === Phase 1 MVP: OS-level sandboxing (per ADR-XXXX) ===
+# === Phase 1 MVP: OS-level sandboxing (per ADR-0001) ===
 from dataclasses import dataclass
 import threading
 import io
