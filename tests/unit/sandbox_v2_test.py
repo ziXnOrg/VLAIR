@@ -87,14 +87,15 @@ def test_integration_timeout_enforced(tmp_path, monkeypatch) -> None:
   from exec import sandbox as sbx
   monkeypatch.setenv("VLTAIR_SANDBOX_DISABLE_WINDOWS_JOB", "1")
   test_file = tmp_path / "test_sleep.py"
-  test_file.write_text(
+  import textwrap
+  test_file.write_text(textwrap.dedent(
     """
-import time
+    import time
 
-def test_sleep():
-  time.sleep(5)
-"""
-  )
+    def test_sleep():
+        time.sleep(5)
+    """
+  ))
   pol = sbx.SandboxPolicy(wall_time_s=1)
   res = sbx.run_pytests_v2([str(test_file)], policy=pol)
   assert res["status"] == "TIMEOUT" and res["rc"] == 124

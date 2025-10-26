@@ -117,3 +117,40 @@ jobs:
             build-ci/Testing/Temporary/LastTest.log
             build-ci/ctest-output.txt
             coverage.xml
+
+
+  windows-python:
+    name: Python Unit Tests (Windows)
+    runs-on: windows-latest
+    env:
+      PYTHONHASHSEED: '0'
+      PYTHONPATH: ${{ github.workspace }}
+      VLTAIR_SANDBOX_ENABLE_RESTRICTED_LAUNCH: '1'
+      COVERAGE_FILE: coverage-windows.data
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set Up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+
+      - name: Install Dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-cov "pydantic>=1.10,<3"
+
+      - name: Python Coverage (pytest-cov)
+        shell: pwsh
+        run: |
+          pytest -q -k "not test_integration_timeout_enforced" --cov=orchestrator --cov=cli --cov-report=term --cov-report=xml:coverage-windows.xml --cov-fail-under=85 tests/unit tests/integration
+
+      - name: Upload Coverage (Windows)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-artifacts-windows
+          path: |
+            coverage-windows.xml
