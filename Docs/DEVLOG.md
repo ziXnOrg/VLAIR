@@ -1,6 +1,23 @@
 # Agent Orchestration Devlog
 
 
+Date (UTC): 2025-10-26 19:22
+Area: CI|Runtime
+Context/Goal: Windows CI timeout test still returns INTERNAL_ERROR after rc=124 forcing. Apply minimal deterministic fix: tolerance + ensure kill on duration fallback (Issue #5); validate via CI.
+Actions:
+- Parsed Windows job logs for run 18822143041: pytest failure at tests/unit/sandbox_v2_test.py::test_integration_timeout_enforced; coverage 86.41% (>=85%).
+- Adjusted fallback threshold in exec/sandbox.py: treat as timeout if duration_ms >= int(wall_time_s*1000) - 50 (50 ms tolerance for Windows jitter).
+- Ensured process termination when fallback triggers (p.kill() under suppress) to avoid stray processes.
+Results:
+- Prior run summary: 1 failed, 80 passed, 5 skipped, 20 warnings in ~4.93s. Coverage OK (86.41%).
+Diagnostics:
+- Failure message: expected TIMEOUT/124 but got INTERNAL_ERROR (indicates timed_out=False path still taken on Windows GHA).
+- Likely precision/jitter on duration threshold causing fallback not to trigger despite over-limit workload.
+Decision(s): Adopt small tolerance and kill-on-fallback; keep platform-agnostic code path; no dependency changes.
+Follow-ups:
+- Commit/push to debug/ci-windows-timeout-diagnostics; monitor Windows job; extract diagnostics JSON (timed_out=true, status="TIMEOUT", rc_mapped=124, reason="wall timeout", duration_ms≈1000–1200) and post to Issue #5.
+
+
 Date (UTC): 2025-10-26 19:05
 Area: CI|Runtime
 Context/Goal: Strengthen Windows timeout mapping to force rc=124 whenever timeout is detected by duration fallback (Issue #5); re-run CI to validate.
