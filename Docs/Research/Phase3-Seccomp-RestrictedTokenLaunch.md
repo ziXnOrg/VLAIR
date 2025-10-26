@@ -41,7 +41,7 @@ Architecture mapping
 - exec/sandbox.py: add optional seccomp-bpf setup (Linux) and restricted-token process creation path (Windows) under feature flags
 - cli/orchestrator_cli.py: expose/echo Phase 3 flags in status
 - tests/unit + tests/integration: platform-gated tests and stubs for capability detection
-- Docs/ADRs: ADR-XXXX-sandbox-phase3-seccomp-token.md records decisions
+- Docs/ADRs: ADR-0002-sandbox-phase3-seccomp-token.md records decisions
 
 First principles & invariants
 - Fail closed for forbidden operations when enabled; otherwise fail safe (graceful fallback) with explicit reason
@@ -85,7 +85,7 @@ Open questions
 - Windows token creation privilege assumptions on CI runners?
 
 Next steps (proposed)
-1) Draft ADR-XXXX-sandbox-phase3-seccomp-token (STOP for approval)
+1) Finalize ADR-0002-sandbox-phase3-seccomp-token (STOP A passed)
 2) Spike: seccomp policy skeleton + capability probe (no enforcement by default)
 3) Add CLI/status plumbing and reporting fields
 4) Implement platform-gated tests and minimal enforcement

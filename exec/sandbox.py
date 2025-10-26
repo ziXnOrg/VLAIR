@@ -64,7 +64,7 @@ def _build_env(base: Mapping[str, str], env_overrides: Dict[str, str] | None = N
     env.update(env_overrides)
   return env
 
-# === Phase 1 MVP: OS-level sandboxing (per ADR-XXXX) ===
+# === Phase 1 MVP: OS-level sandboxing (per ADR-0001) ===
 from dataclasses import dataclass
 import threading
 import io
@@ -131,6 +131,8 @@ _STATUS_MEM = "MEM_LIMIT"
 _STATUS_TERM = "KILLED_TERM"
 _STATUS_KILL = "KILLED_KILL"
 _STATUS_INTERNAL = "INTERNAL_ERROR"
+_STATUS_DENIED = "SANDBOX_DENIED"
+
 
 # Subset of NTSTATUS that plausibly indicate memory/resource termination
 _NTSTATUS_MEM = {0xC0000017, 0xC00000A7, 0xC00000A2}  # NO_MEMORY, COMMITMENT_LIMIT, WORKING_SET_QUOTA
@@ -150,6 +152,8 @@ def _normalize_status(returncode: int, timed_out: bool, plat: str) -> tuple[str,
         return _STATUS_KILL, 128 + sig, f"SIGKILL (signal {sig})"
       if sig == getattr(signal, "SIGTERM", 15):
         return _STATUS_TERM, 128 + sig, f"SIGTERM (signal {sig})"
+      if sig == getattr(signal, "SIGSYS", 31):
+        return _STATUS_DENIED, 128 + sig, f"SIGSYS (signal {sig})"
       return _STATUS_INTERNAL, 1, f"terminated by signal {sig}"
     # Non-zero exit; unknown cause
     return _STATUS_INTERNAL, 1, f"exit code {returncode}"
@@ -283,6 +287,108 @@ def _setup_cgroup_v2(trace_id: str, policy: SandboxPolicy) -> tuple[str | None, 
   details["applied"] = bool(mem_ok or pids_ok or cpu_ok)
   return path, details, ""
 
+# ---- Linux seccomp (Phase 3, optional) ----
+
+# Phase 3 (Linux): seccomp-bpf capability detection
+# Requirements:
+#  - Linux kernel with seccomp-bpf (>= 3.5; broadly available on modern distros)
+#  - libseccomp shared library (e.g., libseccomp.so.2) present at runtime
+# Behavior:
+#  - Pure detection: returns (False, reason) when unsupported; caller MUST degrade to Phase 2
+# Determinism:
+#  - No side effects; stable, terse reason strings suitable for surfacing in enforcement.fallback_reason
+
+def _detect_seccomp_lib() -> tuple[bool, str]:
+  if _IS_WINDOWS or platform.system() != "Linux":
+    return False, "not-linux"
+  try:
+    import ctypes  # noqa: F401
+    for name in ("libseccomp.so.2", "libseccomp.so", "libseccomp.so.1"):
+      try:
+        ctypes.CDLL(name)
+        return True, ""
+      except Exception:
+        continue
+    return False, "libseccomp not found"
+  except Exception as e:
+    return False, f"{e.__class__.__name__}: {e}"
+
+
+# Phase 3 (Linux): Apply permissive filter (ALLOW) with explicit TRAP for network syscalls.
+# Limitations:
+#  - Syscall names can vary by architecture; unresolved names are ignored (policy remains permissive).
+#  - Only network syscalls are trapped; all others allowed to minimize breakage of Python/pytest internals.
+#  - TRAP action causes SIGSYS, which we normalize deterministically to SANDBOX_DENIED.
+# Fallback:
+#  - If libseccomp is missing or filter load fails, this preexec is effectively a no-op and caller retains Phase 2 behavior.
+
+def _make_linux_seccomp_preexec_block_net():  # type: ignore[return-type]
+  # Install a permissive filter (ALLOW) with explicit TRAP on network-related syscalls.
+  # This avoids broad allowlists that can break Python/pytest.
+  def _apply():
+    import ctypes
+    lib = None
+    for name in ("libseccomp.so.2", "libseccomp.so", "libseccomp.so.1"):
+      try:
+        lib = ctypes.CDLL(name)
+        break
+      except Exception:
+        continue
+    if lib is None:
+      return
+    # Types and prototypes
+    c_void_p = ctypes.c_void_p
+    c_int = ctypes.c_int
+    c_uint = ctypes.c_uint
+    lib.seccomp_init.argtypes = [c_uint]
+    lib.seccomp_init.restype = c_void_p
+    lib.seccomp_rule_add.argtypes = [c_void_p, c_uint, c_int, c_uint]
+    lib.seccomp_rule_add.restype = c_int
+    lib.seccomp_syscall_resolve_name.argtypes = [ctypes.c_char_p]
+    lib.seccomp_syscall_resolve_name.restype = c_int
+    lib.seccomp_load.argtypes = [c_void_p]
+    lib.seccomp_load.restype = c_int
+    lib.seccomp_release.argtypes = [c_void_p]
+    lib.seccomp_release.restype = None
+
+    SCMP_ACT_ALLOW = 0x7FFF0000
+    SCMP_ACT_TRAP = 0x00030000
+
+    ctx = lib.seccomp_init(SCMP_ACT_ALLOW)
+    if not ctx:
+      return
+    try:
+      deny = [
+        b"socket", b"connect", b"accept", b"accept4", b"bind", b"listen",
+        b"sendto", b"sendmsg", b"sendmmsg", b"recvfrom", b"recvmsg", b"recvmmsg",
+        b"getsockname", b"getpeername", b"shutdown", b"setsockopt", b"getsockopt",
+      ]
+      for nm in deny:
+        scno = lib.seccomp_syscall_resolve_name(nm)
+        if scno >= 0:
+          lib.seccomp_rule_add(ctx, SCMP_ACT_TRAP, scno, 0)
+      lib.seccomp_load(ctx)
+    finally:
+      lib.seccomp_release(ctx)
+  return _apply
+
+
+def _compose_preexec(funcs):  # type: ignore[return-type]
+  def _run_all():
+    for f in funcs:
+      if f:
+        try:
+          f()
+        except Exception:
+          # Best-effort: do not crash child preexec
+          pass
+  return _run_all
+
+
+# Phase 3 (Windows): Restricted token support detection.
+# Notes:
+#  - Presence of CreateRestrictedToken is a proxy for capability; successful spawn can still require privileges
+#    (e.g., SeAssignPrimaryTokenPrivilege, SeIncreaseQuotaPrivilege) at CreateProcessWithTokenW time.
 
 def _detect_restricted_token_support() -> tuple[bool, str]:
   """Best-effort detection for Windows Restricted Token support.
@@ -297,6 +403,13 @@ def _detect_restricted_token_support() -> tuple[bool, str]:
   except Exception as e:
     return False, f"{e.__class__.__name__}: {e}"
 
+
+# Phase 3 (Windows): Best-effort restricted token creation probe (no process spawn).
+# Privilege expectations:
+#  - OpenProcessToken(TOKEN_ASSIGN_PRIMARY|TOKEN_DUPLICATE|TOKEN_QUERY) may fail on locked-down environments.
+#  - DuplicateTokenEx for a primary token can also require SeAssignPrimaryTokenPrivilege.
+# Behavior:
+#  - Deterministic outcome with stable reason; callers should surface reason and fall back to Phase 2 when False.
 
 def _win_try_create_restricted_token() -> tuple[bool, str]:
   """Attempt to create a restricted token from current process token.
@@ -418,6 +531,219 @@ if _IS_WINDOWS:
       return job, enforced, f"job config error: {e}"
 
 
+# Phase 3 (Windows): Spawn with restricted primary token (CreateProcessWithTokenW).
+# Behavior:
+#  - Redirects stdout/stderr via CreatePipe; assigns process to an existing Job Object when provided.
+#  - Deterministic error messages include GetLastError (GLE) for diagnosability.
+# Privilege requirements and fallbacks:
+#  - CreateProcessWithTokenW commonly requires SeAssignPrimaryTokenPrivilege and SeIncreaseQuotaPrivilege;
+#    standard users often lack these privileges. On failure, callers MUST fall back to the normal Popen path
+#    and report enforcement.phase3.fallback_reason.
+
+def _win_spawn_with_restricted_token(cmd: list[str], env: dict[str, str], job: HANDLE | None, cwd: str | None):
+    """Spawn a child process with a restricted primary token using CreateProcessWithTokenW.
+    Returns an object with .stdout/.stderr file objects and .wait(timeout)->rc semantics.
+    Raises RuntimeError on failure with a deterministic message.
+    """
+    import os as _os
+    import subprocess as _sp
+    import msvcrt as _msvcrt
+    import ctypes
+    import ctypes.wintypes as wt
+
+    adv = ctypes.WinDLL("advapi32", use_last_error=True)
+    k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+
+    # --- Structs ---
+    class SECURITY_ATTRIBUTES(ctypes.Structure):
+      _fields_ = [("nLength", wt.DWORD), ("lpSecurityDescriptor", ctypes.c_void_p), ("bInheritHandle", wt.BOOL)]
+
+    class STARTUPINFOW(ctypes.Structure):
+      _fields_ = [
+        ("cb", wt.DWORD), ("lpReserved", wt.LPWSTR), ("lpDesktop", wt.LPWSTR), ("lpTitle", wt.LPWSTR),
+        ("dwX", wt.DWORD), ("dwY", wt.DWORD), ("dwXSize", wt.DWORD), ("dwYSize", wt.DWORD),
+        ("dwXCountChars", wt.DWORD), ("dwYCountChars", wt.DWORD), ("dwFillAttribute", wt.DWORD),
+        ("dwFlags", wt.DWORD), ("wShowWindow", wt.WORD), ("cbReserved2", wt.WORD), ("lpReserved2", ctypes.c_void_p),
+        ("hStdInput", wt.HANDLE), ("hStdOutput", wt.HANDLE), ("hStdError", wt.HANDLE),
+      ]
+
+    class PROCESS_INFORMATION(ctypes.Structure):
+      _fields_ = [("hProcess", wt.HANDLE), ("hThread", wt.HANDLE), ("dwProcessId", wt.DWORD), ("dwThreadId", wt.DWORD)]
+
+    # --- Constants ---
+    TOKEN_ASSIGN_PRIMARY = 0x0001
+    TOKEN_DUPLICATE = 0x0002
+    TOKEN_QUERY = 0x0008
+    DISABLE_MAX_PRIVILEGE = 0x0001
+
+    LOGON_WITH_PROFILE = 0x00000001
+    CREATE_UNICODE_ENVIRONMENT = 0x00000400
+    STARTF_USESTDHANDLES = 0x00000100
+
+    HANDLE_FLAG_INHERIT = 0x00000001
+    INFINITE = 0xFFFFFFFF
+    WAIT_OBJECT_0 = 0x00000000
+    WAIT_TIMEOUT = 0x00000102
+
+    # --- Prototypes ---
+    OpenProcessToken = adv.OpenProcessToken
+    OpenProcessToken.argtypes = [wt.HANDLE, wt.DWORD, ctypes.POINTER(wt.HANDLE)]
+    OpenProcessToken.restype = wt.BOOL
+
+    GetCurrentProcess = k32.GetCurrentProcess
+    GetCurrentProcess.argtypes = []
+    GetCurrentProcess.restype = wt.HANDLE
+
+    CreateRestrictedToken = adv.CreateRestrictedToken
+    CreateRestrictedToken.argtypes = [wt.HANDLE, wt.DWORD, wt.DWORD, ctypes.c_void_p, wt.DWORD, ctypes.c_void_p, wt.DWORD, ctypes.c_void_p, ctypes.POINTER(wt.HANDLE)]
+    CreateRestrictedToken.restype = wt.BOOL
+
+    DuplicateTokenEx = getattr(adv, "DuplicateTokenEx", None)
+    if DuplicateTokenEx:
+      DuplicateTokenEx.argtypes = [wt.HANDLE, wt.DWORD, ctypes.POINTER(SECURITY_ATTRIBUTES), wt.DWORD, wt.DWORD, ctypes.POINTER(wt.HANDLE)]
+      DuplicateTokenEx.restype = wt.BOOL
+
+    CreateProcessWithTokenW = adv.CreateProcessWithTokenW
+    CreateProcessWithTokenW.argtypes = [wt.HANDLE, wt.DWORD, wt.LPCWSTR, wt.LPWSTR, wt.DWORD, ctypes.c_void_p, wt.LPCWSTR, ctypes.POINTER(STARTUPINFOW), ctypes.POINTER(PROCESS_INFORMATION)]
+    CreateProcessWithTokenW.restype = wt.BOOL
+
+    CreatePipe = k32.CreatePipe
+    CreatePipe.argtypes = [ctypes.POINTER(wt.HANDLE), ctypes.POINTER(wt.HANDLE), ctypes.POINTER(SECURITY_ATTRIBUTES), wt.DWORD]
+    CreatePipe.restype = wt.BOOL
+
+    SetHandleInformation = k32.SetHandleInformation
+    SetHandleInformation.argtypes = [wt.HANDLE, wt.DWORD, wt.DWORD]
+    SetHandleInformation.restype = wt.BOOL
+
+    GetStdHandle = k32.GetStdHandle
+    GetStdHandle.argtypes = [wt.DWORD]
+    GetStdHandle.restype = wt.HANDLE
+
+    WaitForSingleObject = k32.WaitForSingleObject
+    WaitForSingleObject.argtypes = [wt.HANDLE, wt.DWORD]
+    WaitForSingleObject.restype = wt.DWORD
+
+    GetExitCodeProcess = k32.GetExitCodeProcess
+    GetExitCodeProcess.argtypes = [wt.HANDLE, ctypes.POINTER(wt.DWORD)]
+    GetExitCodeProcess.restype = wt.BOOL
+
+    CloseHandle = k32.CloseHandle
+    CloseHandle.argtypes = [wt.HANDLE]
+    CloseHandle.restype = wt.BOOL
+
+    AssignProcessToJobObject = _AssignProcessToJobObject  # reuse bound symbol
+
+    def _fail(msg: str) -> RuntimeError:
+      gle = ctypes.get_last_error() or 0
+      return RuntimeError(f"{msg} (GLE={gle})")
+
+    # --- Build pipes (stdout/stderr) ---
+    sa = SECURITY_ATTRIBUTES(wt.DWORD(ctypes.sizeof(SECURITY_ATTRIBUTES)), None, wt.BOOL(True))
+    h_out_r, h_out_w = wt.HANDLE(), wt.HANDLE()
+    h_err_r, h_err_w = wt.HANDLE(), wt.HANDLE()
+    if not CreatePipe(ctypes.byref(h_out_r), ctypes.byref(h_out_w), ctypes.byref(sa), 0):
+      raise _fail("CreatePipe stdout failed")
+    if not CreatePipe(ctypes.byref(h_err_r), ctypes.byref(h_err_w), ctypes.byref(sa), 0):
+      # cleanup stdout pipe
+      CloseHandle(h_out_r); CloseHandle(h_out_w)
+      raise _fail("CreatePipe stderr failed")
+    # Parent read ends must be non-inheritable
+    SetHandleInformation(h_out_r, HANDLE_FLAG_INHERIT, 0)
+    SetHandleInformation(h_err_r, HANDLE_FLAG_INHERIT, 0)
+
+    # --- Create restricted primary token ---
+    hTok = wt.HANDLE()
+    if not OpenProcessToken(GetCurrentProcess(), TOKEN_ASSIGN_PRIMARY | TOKEN_DUPLICATE | TOKEN_QUERY, ctypes.byref(hTok)):
+      # cleanup pipes
+      CloseHandle(h_out_r); CloseHandle(h_out_w); CloseHandle(h_err_r); CloseHandle(h_err_w)
+      raise _fail("OpenProcessToken failed")
+    newTok = wt.HANDLE()
+    if not CreateRestrictedToken(hTok, DISABLE_MAX_PRIVILEGE, 0, None, 0, None, 0, None, ctypes.byref(newTok)):
+      CloseHandle(hTok); CloseHandle(h_out_r); CloseHandle(h_out_w); CloseHandle(h_err_r); CloseHandle(h_err_w)
+      raise _fail("CreateRestrictedToken failed")
+    CloseHandle(hTok)
+
+    # Best-effort ensure primary token via DuplicateTokenEx if available
+    if DuplicateTokenEx:
+      primaryTok = wt.HANDLE()
+      # SecurityImpersonation=2, TokenPrimary=1
+      if not DuplicateTokenEx(newTok, TOKEN_ASSIGN_PRIMARY | TOKEN_QUERY, None, 2, 1, ctypes.byref(primaryTok)):
+        CloseHandle(newTok); CloseHandle(h_out_r); CloseHandle(h_out_w); CloseHandle(h_err_r); CloseHandle(h_err_w)
+        raise _fail("DuplicateTokenEx failed")
+      CloseHandle(newTok)
+      hToUse = primaryTok
+    else:
+      hToUse = newTok
+
+    # --- STARTUPINFO and environment ---
+    si = STARTUPINFOW()
+    si.cb = ctypes.sizeof(STARTUPINFOW)
+    si.dwFlags = STARTF_USESTDHANDLES
+    si.hStdInput = GetStdHandle(wt.DWORD(0xFFFFfff6))  # STD_INPUT_HANDLE(-10)
+    si.hStdOutput = h_out_w
+    si.hStdError = h_err_w
+
+    pi = PROCESS_INFORMATION()
+
+    # Command line and environment block
+    cmdline = _sp.list2cmdline(cmd)
+    cmdbuf = ctypes.create_unicode_buffer(cmdline)
+    # Deterministic environment block: sorted by key
+    items = sorted((k, env[k]) for k in env)
+    block = "\0".join([f"{k}={v}" for k, v in items]) + "\0\0"
+    envbuf = ctypes.create_unicode_buffer(block)
+
+    ok = CreateProcessWithTokenW(hToUse, LOGON_WITH_PROFILE, None, cmdbuf, CREATE_UNICODE_ENVIRONMENT, envbuf, cwd, ctypes.byref(si), ctypes.byref(pi))
+    # Child inherits write ends; parent must close them after spawn
+    CloseHandle(h_out_w); CloseHandle(h_err_w)
+    if not ok:
+      CloseHandle(hToUse); CloseHandle(h_out_r); CloseHandle(h_err_r)
+      raise _fail("CreateProcessWithTokenW failed")
+
+    # Assign to job if provided
+    try:
+      if job:
+        AssignProcessToJobObject(job, pi.hProcess)
+    except Exception:
+      pass
+
+    # Wrap read handles as binary file objects
+    fd_out = _msvcrt.open_osfhandle(int(h_out_r.value), 0)
+    fd_err = _msvcrt.open_osfhandle(int(h_err_r.value), 0)
+    f_out = _os.fdopen(fd_out, "rb", buffering=0)
+    f_err = _os.fdopen(fd_err, "rb", buffering=0)
+
+    class _WinProc:
+      def __init__(self, hProc, hTh, fout, ferr):
+        self._hProc = hProc; self._hTh = hTh
+        self.stdout = fout; self.stderr = ferr
+        self.returncode = None
+      def wait(self, timeout=None):
+        ms = INFINITE if timeout is None else int(max(0, timeout) * 1000)
+        res = WaitForSingleObject(self._hProc, ms)
+        if res == WAIT_TIMEOUT:
+          raise _sp.TimeoutExpired(cmd, timeout)
+        code = wt.DWORD()
+        if not GetExitCodeProcess(self._hProc, ctypes.byref(code)):
+          self.returncode = 1
+        else:
+          self.returncode = int(code.value)
+        # Close thread handle; keep process handle until kill/GC
+        try:
+          CloseHandle(self._hTh)
+        except Exception:
+          pass
+        return self.returncode
+      def kill(self):
+        # Best-effort terminate
+        try:
+          k32.TerminateProcess(self._hProc, 137)
+        except Exception:
+          pass
+
+    return _WinProc(pi.hProcess, pi.hThread, f_out, f_err)
+
+
 def run_pytests_v2(
   paths: List[str],
   policy: SandboxPolicy | None = None,
@@ -437,6 +763,9 @@ def run_pytests_v2(
   # Phase 2 feature flags are read dynamically to support tests that toggle via env
   enable_cg = (os.getenv("VLTAIR_SANDBOX_ENABLE_CGROUPS_V2", "0") == "1")
   enable_rt = (os.getenv("VLTAIR_SANDBOX_ENABLE_RESTRICTED_TOKEN", "0") == "1")
+  enable_seccomp = (os.getenv("VLTAIR_SANDBOX_ENABLE_SECCOMP", "0") == "1")
+  enable_rlaunch = (os.getenv("VLTAIR_SANDBOX_ENABLE_RESTRICTED_LAUNCH", "0") == "1")
+
 
   enforced: Dict[str, Any] = {
     "platform": platform.system(),
@@ -461,6 +790,14 @@ def run_pytests_v2(
       "applied": False,
       "reason": "",
     },
+    "phase3": {
+      "policy_kind": "none",
+      "enabled": bool(enable_seccomp or enable_rlaunch),
+      "effective": False,
+      "fallback_reason": "",
+      "version": 0,
+    },
+
   }
 
   # Start process with platform-specific enforcement
@@ -508,13 +845,30 @@ def run_pytests_v2(
             enforced["restricted_token"]["reason"] = prep_reason
         else:
           enforced["restricted_token"]["reason"] = rsn
-      # Spawn normally and assign to Job
-      p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=False, env=env)
-      try:
-        if job:
-          _AssignProcessToJobObject(job, HANDLE(p._handle))  # type: ignore[attr-defined]
-      except Exception:
-        pass
+      # Phase 3: restricted token launch (opt-in)
+      used_restricted = False
+      if enable_rlaunch:
+        enforced["phase3"]["policy_kind"] = "restricted_token"
+        enforced["phase3"]["enabled"] = True
+        det, rsn = _detect_restricted_token_support()
+        if not det:
+          enforced["phase3"]["fallback_reason"] = rsn
+        else:
+          try:
+            p = _win_spawn_with_restricted_token(cmd, env, job, None)
+            enforced["phase3"]["effective"] = True
+            enforced["phase3"]["version"] = 1
+            used_restricted = True
+          except Exception as e:
+            enforced["phase3"]["fallback_reason"] = f"{e}"
+
+      if not used_restricted:
+        p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=False, env=env)
+        try:
+          if job:
+            _AssignProcessToJobObject(job, HANDLE(p._handle))  # type: ignore[attr-defined]
+        except Exception:
+          pass
     else:
       # Unix branch (and Windows when jobs are explicitly disabled): preexec rlimits + optional cgroups v2
       preexec = None
@@ -543,6 +897,22 @@ def run_pytests_v2(
             enforced["cgroups_v2"].update({k: v for k, v in cg_details.items() if k in ("applied", "path", "limits")})
             if cg_err:
               enforced["cgroups_v2"]["reason"] = cg_err
+      # Phase 3: seccomp (opt-in)
+      if enable_seccomp and platform.system() == "Linux":
+        enforced["phase3"]["policy_kind"] = "seccomp"
+        enforced["phase3"]["enabled"] = True
+        det, rsn = _detect_seccomp_lib()
+        if not det:
+          enforced["phase3"]["fallback_reason"] = rsn
+        else:
+          try:
+            seccomp_pre = _make_linux_seccomp_preexec_block_net()
+            preexec = _compose_preexec([preexec, seccomp_pre])
+            enforced["phase3"]["effective"] = True
+            enforced["phase3"]["version"] = 1
+          except Exception as e:
+            enforced["phase3"]["fallback_reason"] = f"seccomp init failed: {e}"
+
       p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=False, env=env, preexec_fn=preexec)
       # Attach to cgroup after spawn (if created)
       if cgroup_path:
