@@ -1,6 +1,27 @@
 # Agent Orchestration Devlog
 
 
+
+Date (UTC): 2025-10-26 22:50
+Area: Architecture|Runtime|Docs
+Context/Goal: Finalize P2-2.1 (Agent interfaces and registry), ensure quality gates pass locally, correct previous DEVLOG inaccuracy re: base.Agent abstractness, and open PR.
+Actions:
+- Restored orchestrator/agents/base.py from origin/main earlier via fix-up (bdc5c7e); no ABC conversion.
+- Updated tests/unit/agents_test.py to align with current base.Agent contract (instantiate allowed; run() raises NotImplementedError when not overridden).
+- Kept duplicate registration validation in orchestrator/core/registry.py; applied ruff format to touched files.
+- Created venv, installed ruff/mypy; ran: ruff check; ruff format --check (then format → re-check clean); mypy --strict orchestrator/core/registry.py; pytest with coverage for unit tests.
+- Committed in two steps: tests update (52b9613) and style(core) format for registry.py (509d25e); pushed; opened PR #7.
+Results:
+- Tests: 11 passed, 0 failed.
+- Coverage (modified files): base.py 100%, registry.py 93%.
+- Lint/format/type: clean on targeted files.
+Diagnostics:
+- Prior DEVLOG entry (2025-10-26 21:20) incorrectly claimed converting Agent to an ABC. Actual state: base.Agent remains instantiable; contract enforced via NotImplementedError at run(). This entry supersedes and corrects the record.
+Decision(s):
+- Preserve narrow scope and determinism; separate behavior (test) and style (format) commits for auditability; avoid repo-wide format churn.
+Follow-ups:
+- Monitor CI for PR #7; if green, proceed to merge. Update TASKS.md with PR reference; maintain ≥85% coverage gates on modified modules.
+
 Date (UTC): 2025-10-26 19:22
 Area: CI|Runtime
 Context/Goal: Windows CI timeout test still returns INTERNAL_ERROR after rc=124 forcing. Apply minimal deterministic fix: tolerance + ensure kill on duration fallback (Issue #5); validate via CI.
@@ -171,6 +192,27 @@ Diagnostics:
 Decision(s): Keep change minimal; no behavior change except emitting diag line for observability.
 Follow-ups:
 - Push to debug/ci-windows-timeout-diagnostics; monitor run; if timed_out remains false, use evidence to adjust timeout handling minimally.
+
+
+---
+Date (UTC): 2025-10-26 21:20
+Area: Architecture|Runtime
+Context/Goal: Implement P2-2.1 (Agent interfaces and registry) per Phase 2 requirements with minimal, deterministic changes.
+Actions:
+- Research: Reviewed Docs/ImplementationPlan.md Phase 2, Blueprint message schemas, multi-agent-coordination rules, and existing code under orchestrator/agents and orchestrator/core/registry.
+- Design: Kept existing structure; added explicit ABC base with abstract run() and deterministic contract docstring.
+- Impl:
+  - orchestrator/agents/base.py → converted Agent to ABC with @abstractmethod run(); added AgentContext Protocol docstring.
+  - orchestrator/core/registry.py → added duplicate registration validation (raises ValueError); added class/method docstrings.
+- Tests: Added tests/unit/agents_test.py covering abstract enforcement, simple agent subclass run, duplicate registration error, and registry isolation.
+Results:
+- Local env lacks pytest; deferred execution to CI. Changes are minimal and should not affect existing behavior except to reject duplicate registrations (no callers rely on duplicate overwrite).
+Diagnostics:
+- The repo already had a functioning Agent base and a routing registry; P2-2.1 completion focused on hardening (docs, abstractness, validation) rather than structural changes to avoid churn.
+Decisions:
+- Preserve registry surface and Orchestrator dispatch; avoid introducing class-mapping registry at this stage. Enforce duplicate rejection for safety.
+Follow-ups:
+- P2-2.2 CodeGenAgent specifics; consider adding optional factory mapping in registry in a future batch if needed by orchestration design.
 
 
 Date (UTC): 2025-10-26 20:00
