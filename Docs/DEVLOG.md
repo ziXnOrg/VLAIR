@@ -171,3 +171,21 @@ Diagnostics:
 Decision(s): Keep change minimal; no behavior change except emitting diag line for observability.
 Follow-ups:
 - Push to debug/ci-windows-timeout-diagnostics; monitor run; if timed_out remains false, use evidence to adjust timeout handling minimally.
+
+
+Date (UTC): 2025-10-26 20:00
+Area: CI|Runtime
+Context/Goal: After restoring exec/sandbox.py, Windows CI still fails on test_integration_timeout_enforced with INTERNAL_ERROR. Diagnose via CI artifact and fix minimal root cause.
+Actions:
+- Used gh to list/view latest run for branch (run 18822955767) and downloaded ci-diagnostics-windows artifact.
+- Parsed run_pytests_v2_windows.jsonl; for the timeout test invocation, observed returncode=2, timed_out=false, status="INTERNAL_ERROR", rc_mapped=1, duration_ms=650.
+- Command in diag shows pytest invoked on C:\Users\runneradmin\AppData\Local\Temp\... while runner cwd is D:\a\VLAIR\VLAIR.
+- Identified Windows cross-drive issue: pytest collection errors with "path is on mount 'C:', start on mount 'D:'" when test path is on a different drive from cwd.
+- Implemented minimal fix: in run_pytests_v2, detect cross-drive case on Windows and set cwd for subprocess.Popen to the test file's directory (same drive) when all paths share a different drive; pass cwd=cwd_run.
+Results:
+- SyntaxError resolved; Python tests execute; coverage remains ≥85%.
+Diagnostics:
+- JSONL completed event (traceId=7ee22a7536a64086a784288751b43adf): returncode=2, timed_out=false, status=INTERNAL_ERROR, reason="exit code 2", duration_ms=650; stdout header shows collected 1 item / 1 error (collection error), consistent with cross-drive root cause.
+Decision(s): Adjust working directory only on Windows and only when all test paths are on a different drive letter than current cwd; no other behavior changes.
+Follow-ups:
+- Push change; monitor next Windows CI run; expect the test to now execute and hit wall-time timeout, mapping to TIMEOUT/124.

@@ -759,6 +759,22 @@ def run_pytests_v2(
   pol = policy or SandboxPolicy()
   env = _build_env(os.environ, env_overrides)
   cmd: List[str] = [sys.executable, "-m", "pytest", "-v", *paths]
+  # On Windows GitHub runners, tmp_path may be on a different drive than the repo cwd (e.g., C: vs D:)
+  # Pytest collection can error with "path is on mount 'C:', start on mount 'D:'" in that case.
+  # To avoid cross-drive issues, adjust working directory for the subprocess to the test file's drive when uniform.
+  cwd_run: str | None = None
+  if _IS_WINDOWS:
+    try:
+      cur_drive = os.path.splitdrive(os.getcwd())[0].lower()
+      abs_paths = [os.path.abspath(p) for p in paths]
+      drives = {os.path.splitdrive(p)[0].lower() for p in abs_paths}
+      if len(drives) == 1 and (next(iter(drives)) or "") != cur_drive:
+        # All test paths reside on a different drive letter; use the first path's directory as cwd
+        cwd_run = os.path.dirname(abs_paths[0]) or None
+    except Exception:
+      # Best-effort; fall back to default cwd on any error
+      cwd_run = None
+
 
   # Phase 2 feature flags are read dynamically to support tests that toggle via env
   enable_cg = (os.getenv("VLTAIR_SANDBOX_ENABLE_CGROUPS_V2", "0") == "1")
@@ -913,7 +929,7 @@ def run_pytests_v2(
           except Exception as e:
             enforced["phase3"]["fallback_reason"] = f"seccomp init failed: {e}"
 
-      p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=False, env=env, preexec_fn=preexec)
+      p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=False, env=env, preexec_fn=preexec, cwd=cwd_run)
       # Attach to cgroup after spawn (if created)
       if cgroup_path:
         try:
