@@ -156,3 +156,18 @@ Date: 2025-10-20 00:00:00 -06:00
 ```powershell
 # (to be filled once bindings are implemented)
 ```
+
+
+Date (UTC): 2025-10-26 19:28
+Area: CI|Diagnostics
+Context/Goal: Unable to fetch artifact bytes via API tool to parse diagnostics JSONL. Emit CI diagnostics to stdout to unblock analysis on Windows CI logs.
+Actions:
+- Modified exec/sandbox.py:_ci_diag_write to also print completed/exception events to stdout when VLTAIR_CI_DIAG=1 and GITHUB_ACTIONS=true.
+- Will re-run CI and scrape [ci-diag] lines from Windows job logs to capture returncode/timed_out/status/rc_mapped/reason/duration_ms.
+Results:
+- Expect logs to contain a single-line JSON for event=completed.
+Diagnostics:
+- This is a no-op for local runs; file write remains primary output; printing only when env-guarded.
+Decision(s): Keep change minimal; no behavior change except emitting diag line for observability.
+Follow-ups:
+- Push to debug/ci-windows-timeout-diagnostics; monitor run; if timed_out remains false, use evidence to adjust timeout handling minimally.
