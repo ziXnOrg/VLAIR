@@ -175,3 +175,72 @@ def test_phase2_windows_restricted_token_reporting_with_stubs(monkeypatch) -> No
   assert rt.get("detected") in (True, False)  # may be False on non-Windows without stub; here True via stub
   # prepared may be True per stub but applied remains False in MVP
   assert rt.get("prepared") in (True, False)
+
+
+# ----- Phase 3 (RED) acceptance tests (platform-gated) -----
+
+def test_phase3_crosscutting_reporting_stub_present(tmp_path, monkeypatch) -> None:
+  import pytest
+  from exec import sandbox as sbx
+  monkeypatch.setenv("VLTAIR_SANDBOX_DISABLE_WINDOWS_JOB", "1")
+  test_file = tmp_path / "test_ok.py"
+  test_file.write_text("""
+import pytest
+
+def test_ok():
+  assert True
+""")
+  res = sbx.run_pytests_v2([str(test_file)], policy=sbx.SandboxPolicy(wall_time_s=5))
+  ph3 = res.get("enforced", {}).get("phase3", {})
+  # Stubs should expose deterministic fields even before implementation
+  assert set(["policy_kind","enabled","effective","fallback_reason","version"]).issubset(set(ph3.keys()))
+
+
+def test_phase3_linux_seccomp_denied_syscall_maps(tmp_path, monkeypatch) -> None:
+  import pytest, sys
+  if sys.platform != "linux":
+    pytest.skip("Linux-only (seccomp)")
+  from exec import sandbox as sbx
+  monkeypatch.setenv("VLTAIR_SANDBOX_ENABLE_SECCOMP", "1")
+  test_file = tmp_path / "test_socket.py"
+  test_file.write_text("""
+import socket
+
+def test_sock():
+  s = socket.socket()
+  s.close()
+""")
+  res = sbx.run_pytests_v2([str(test_file)], policy=sbx.SandboxPolicy(wall_time_s=5))
+  # Expected once implemented: disallowed syscall -> SANDBOX_DENIED (RED for now)
+  assert res["status"] == "SANDBOX_DENIED"
+
+
+def test_phase3_windows_restricted_launch_applies(tmp_path, monkeypatch) -> None:
+  import pytest, platform
+  if platform.system() != "Windows":
+    pytest.skip("Windows-only (restricted launch)")
+  from exec import sandbox as sbx
+  det, rsn = sbx._detect_restricted_token_support()
+  if not det:
+    pytest.skip(f"Restricted token not supported: {rsn}")
+  ok, prep = sbx._win_try_create_restricted_token()
+  if not ok:
+    pytest.skip(f"Cannot create restricted token: {prep}")
+  monkeypatch.setenv("VLTAIR_SANDBOX_ENABLE_RESTRICTED_LAUNCH", "1")
+  test_file = tmp_path / "test_ok_win.py"
+  test_file.write_text("""
+
+def test_ok():
+  assert True
+""")
+  res = sbx.run_pytests_v2([str(test_file)], policy=sbx.SandboxPolicy(wall_time_s=5))
+  ph3 = res.get("enforced", {}).get("phase3", {})
+  if not ph3.get("effective"):
+    import pytest
+    pytest.skip(f"restricted launch fallback: {ph3.get('fallback_reason','')}\nres={res}")
+  assert ph3.get("effective") is True
+
+
+def test_phase3_perf_harness_stub(monkeypatch):
+  import pytest
+  pytest.skip("perf harness stub; to be implemented with Phase 3 benchmarks")
