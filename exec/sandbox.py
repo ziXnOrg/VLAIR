@@ -759,6 +759,10 @@ def run_pytests_v2(
   pol = policy or SandboxPolicy()
   env = _build_env(os.environ, env_overrides)
   cmd: List[str] = [sys.executable, "-m", "pytest", "-v", *paths]
+  # Windows/GHA cross-drive quirk (Issue #5):
+  # pytest collection can fail if test paths (e.g., tmp_path on C:) are on a different drive
+  # than the repo cwd (e.g., D:). If all paths share a non-cwd drive, run child with cwd on that drive.
+
   # On Windows GitHub runners, tmp_path may be on a different drive than the repo cwd (e.g., C: vs D:)
   # Pytest collection can error with "path is on mount 'C:', start on mount 'D:'" in that case.
   # To avoid cross-drive issues, adjust working directory for the subprocess to the test file's drive when uniform.
