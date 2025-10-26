@@ -173,6 +173,27 @@ Follow-ups:
 - Push to debug/ci-windows-timeout-diagnostics; monitor run; if timed_out remains false, use evidence to adjust timeout handling minimally.
 
 
+---
+Date (UTC): 2025-10-26 21:20
+Area: Architecture|Runtime
+Context/Goal: Implement P2-2.1 (Agent interfaces and registry) per Phase 2 requirements with minimal, deterministic changes.
+Actions:
+- Research: Reviewed Docs/ImplementationPlan.md Phase 2, Blueprint message schemas, multi-agent-coordination rules, and existing code under orchestrator/agents and orchestrator/core/registry.
+- Design: Kept existing structure; added explicit ABC base with abstract run() and deterministic contract docstring.
+- Impl:
+  - orchestrator/agents/base.py → converted Agent to ABC with @abstractmethod run(); added AgentContext Protocol docstring.
+  - orchestrator/core/registry.py → added duplicate registration validation (raises ValueError); added class/method docstrings.
+- Tests: Added tests/unit/agents_test.py covering abstract enforcement, simple agent subclass run, duplicate registration error, and registry isolation.
+Results:
+- Local env lacks pytest; deferred execution to CI. Changes are minimal and should not affect existing behavior except to reject duplicate registrations (no callers rely on duplicate overwrite).
+Diagnostics:
+- The repo already had a functioning Agent base and a routing registry; P2-2.1 completion focused on hardening (docs, abstractness, validation) rather than structural changes to avoid churn.
+Decisions:
+- Preserve registry surface and Orchestrator dispatch; avoid introducing class-mapping registry at this stage. Enforce duplicate rejection for safety.
+Follow-ups:
+- P2-2.2 CodeGenAgent specifics; consider adding optional factory mapping in registry in a future batch if needed by orchestration design.
+
+
 Date (UTC): 2025-10-26 20:00
 Area: CI|Runtime
 Context/Goal: After restoring exec/sandbox.py, Windows CI still fails on test_integration_timeout_enforced with INTERNAL_ERROR. Diagnose via CI artifact and fix minimal root cause.

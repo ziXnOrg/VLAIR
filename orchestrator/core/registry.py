@@ -17,11 +17,24 @@ class AgentInfo:
 
 class AgentRegistry:
   def __init__(self) -> None:
+    """Thread-safe in-memory registry of agents and their status.
+
+    Notes:
+    - Duplicate registrations are rejected to avoid accidental overwrites.
+    - Heartbeats are used to filter out stale agents during selection.
+    """
     self._agents: Dict[str, AgentInfo] = {}
     self._lock = threading.RLock()
 
   def register(self, name: str, capabilities: List[str]) -> None:
+    """Register a new agent name with capabilities.
+
+    Raises:
+      ValueError: if an agent with the same name already exists.
+    """
     with self._lock:
+      if name in self._agents:
+        raise ValueError(f"Agent '{name}' already registered")
       self._agents[name] = AgentInfo(name=name, capabilities=set(capabilities), last_heartbeat=time.time())
 
   def list(self) -> List[AgentInfo]:
