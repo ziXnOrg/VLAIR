@@ -127,6 +127,8 @@ jobs:
       PYTHONPATH: ${{ github.workspace }}
       VLTAIR_SANDBOX_ENABLE_RESTRICTED_LAUNCH: '1'
       COVERAGE_FILE: coverage-windows.data
+      VLTAIR_CI_DIAG: '1'
+      VLTAIR_CI_DIAG_PATH: ci_diagnostics/run_pytests_v2_windows.jsonl
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -145,7 +147,7 @@ jobs:
       - name: Python Coverage (pytest-cov)
         shell: pwsh
         run: |
-          pytest -q -k "not test_integration_timeout_enforced" --cov=orchestrator --cov=cli --cov-report=term --cov-report=xml:coverage-windows.xml --cov-fail-under=85 tests/unit tests/integration
+          pytest -q --cov=orchestrator --cov=cli --cov-report=term --cov-report=xml:coverage-windows.xml --cov-fail-under=85 tests/unit tests/integration
 
       - name: Upload Coverage (Windows)
         if: always()
@@ -154,3 +156,11 @@ jobs:
           name: test-artifacts-windows
           path: |
             coverage-windows.xml
+
+      - name: Upload CI Diagnostics (Windows)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-diagnostics-windows
+          path: |
+            ci_diagnostics/**

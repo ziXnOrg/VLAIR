@@ -166,6 +166,36 @@ def _normalize_status(returncode: int, timed_out: bool, plat: str) -> tuple[str,
     pass
   return _STATUS_INTERNAL, 1, f"exit code {returncode}"
 
+
+# ---- CI diagnostics (env-guarded) ----
+def _ci_diag_enabled() -> bool:
+  try:
+    return os.getenv("VLTAIR_CI_DIAG", "0") == "1" and os.getenv("GITHUB_ACTIONS", "").lower() == "true"
+  except Exception:
+    return False
+
+
+def _ci_diag_write(event: str, payload: Dict[str, Any]) -> None:
+  if not _ci_diag_enabled():
+    return
+  try:
+    import json as _json
+    import datetime as _dt
+    path = os.getenv("VLTAIR_CI_DIAG_PATH", os.path.join("ci_diagnostics", "run_pytests_v2_windows.jsonl"))
+    dirn = os.path.dirname(path)
+    if dirn:
+      os.makedirs(dirn, exist_ok=True)
+    rec: Dict[str, Any] = {
+      "ts": _dt.datetime.utcnow().isoformat() + "Z",
+      "event": event,
+    }
+    rec.update(payload)
+    with open(path, "a", encoding="utf-8") as f:
+      f.write(_json.dumps(rec, ensure_ascii=False) + "\n")
+  except Exception:
+    # Never raise from diagnostics
+    pass
+
 # ---- Unix rlimits (Linux/macOS) ----
 
 def _make_unix_preexec(policy: SandboxPolicy):  # type: ignore[return-type]
@@ -729,6 +759,26 @@ def run_pytests_v2(
   pol = policy or SandboxPolicy()
   env = _build_env(os.environ, env_overrides)
   cmd: List[str] = [sys.executable, "-m", "pytest", "-v", *paths]
+  # Windows/GHA cross-drive quirk (Issue #5):
+  # pytest collection can fail if test paths (e.g., tmp_path on C:) are on a different drive
+  # than the repo cwd (e.g., D:). If all paths share a non-cwd drive, run child with cwd on that drive.
+
+  # On Windows GitHub runners, tmp_path may be on a different drive than the repo cwd (e.g., C: vs D:)
+  # Pytest collection can error with "path is on mount 'C:', start on mount 'D:'" in that case.
+  # To avoid cross-drive issues, adjust working directory for the subprocess to the test file's drive when uniform.
+  cwd_run: str | None = None
+  if _IS_WINDOWS:
+    try:
+      cur_drive = os.path.splitdrive(os.getcwd())[0].lower()
+      abs_paths = [os.path.abspath(p) for p in paths]
+      drives = {os.path.splitdrive(p)[0].lower() for p in abs_paths}
+      if len(drives) == 1 and (next(iter(drives)) or "") != cur_drive:
+        # All test paths reside on a different drive letter; use the first path's directory as cwd
+        cwd_run = os.path.dirname(abs_paths[0]) or None
+    except Exception:
+      # Best-effort; fall back to default cwd on any error
+      cwd_run = None
+
 
   # Phase 2 feature flags are read dynamically to support tests that toggle via env
   enable_cg = (os.getenv("VLTAIR_SANDBOX_ENABLE_CGROUPS_V2", "0") == "1")
@@ -775,6 +825,27 @@ def run_pytests_v2(
   timed_out = False
   stdout_text = stderr_text = ""
   cgroup_path: str | None = None
+  _ci_diag_write("start", {
+    "traceId": trace_id,
+    "platform": enforced["platform"],
+    "cwd": os.getcwd(),
+    "cmd": cmd,
+    "policy": {
+      "wall_time_s": pol.wall_time_s,
+      "cpu_time_s": pol.cpu_time_s,
+      "mem_bytes": pol.mem_bytes,
+      "pids_max": pol.pids_max,
+      "nofile": pol.nofile,
+      "output_bytes": pol.output_bytes,
+      "allow_partial": pol.allow_partial,
+    },
+    "env_flags": {
+      "VLTAIR_SANDBOX_DISABLE_WINDOWS_JOB": os.getenv("VLTAIR_SANDBOX_DISABLE_WINDOWS_JOB", ""),
+      "VLTAIR_SANDBOX_ENABLE_RESTRICTED_TOKEN": os.getenv("VLTAIR_SANDBOX_ENABLE_RESTRICTED_TOKEN", ""),
+      "VLTAIR_SANDBOX_ENABLE_CGROUPS_V2": os.getenv("VLTAIR_SANDBOX_ENABLE_CGROUPS_V2", ""),
+    }
+  })
+
   try:
     if _IS_WINDOWS and (os.getenv("VLTAIR_SANDBOX_DISABLE_WINDOWS_JOB", "0") != "1"):
       # Job Objects (Phase 1)
@@ -834,6 +905,8 @@ def run_pytests_v2(
                     "stdout": "", "stderr": "rlimit init failed", "duration_ms": 0, "cmd": cmd,
                     "traceId": trace_id, "enforced": enforced}
         # Phase 2: cgroups v2 (opt-in)
+
+
         if enable_cg:
           det, info, rsn = _detect_cgroups_v2()
           enforced["cgroups_v2"]["detected"] = det
@@ -860,7 +933,10 @@ def run_pytests_v2(
           except Exception as e:
             enforced["phase3"]["fallback_reason"] = f"seccomp init failed: {e}"
 
-      p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=False, env=env, preexec_fn=preexec)
+      popen_kwargs = dict(stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=False, env=env, preexec_fn=preexec)
+      if cwd_run is not None:
+        popen_kwargs["cwd"] = cwd_run
+      p = subprocess.Popen(cmd, **popen_kwargs)
       # Attach to cgroup after spawn (if created)
       if cgroup_path:
         try:
@@ -876,8 +952,30 @@ def run_pytests_v2(
     out_buf: list[str] = [""]
     err_buf: list[str] = [""]
     t_out = threading.Thread(target=lambda: out_buf.__setitem__(0, _read_stream_limited(p.stdout, pol.output_bytes)[0]))
+
+    _ci_diag_write("spawned", {
+      "traceId": trace_id,
+      "pid": int(getattr(p, "pid", -1)),
+      "platform": enforced["platform"],
+    })
+
     t_err = threading.Thread(target=lambda: err_buf.__setitem__(0, _read_stream_limited(p.stderr, pol.output_bytes)[0]))
     t_out.start(); t_err.start()
+
+    # Watchdog: enforce wall clock timeout even if subprocess.wait doesn't raise
+    timed_ev = threading.Event()
+    def _wd() -> None:
+      try:
+        # Sleep for the wall time; if process still alive, mark timed_out and kill
+        time.sleep(max(0, float(pol.wall_time_s or 0)))
+        if getattr(p, "poll", None) is not None and p.poll() is None:
+          timed_ev.set()
+          with contextlib.suppress(Exception):
+            p.kill()
+      except Exception:
+        # Best-effort watchdog; never raise
+        pass
+    threading.Thread(target=_wd, daemon=True).start()
 
     try:
       p.wait(timeout=pol.wall_time_s)
@@ -888,15 +986,47 @@ def run_pytests_v2(
     finally:
       t_out.join(); t_err.join()
 
+    # Incorporate watchdog decision
+    if timed_ev.is_set():
+      timed_out = True
+
     stdout_text, stderr_text = out_buf[0], err_buf[0]
     duration_ms = int((time.perf_counter() - t0) * 1000)
-    rc_raw = p.returncode if p.returncode is not None else (124 if timed_out else 1)
+    # Deterministic fallback: if the measured wall time exceeded the policy limit
+    # but no TimeoutExpired was observed (rare on Windows CI), treat as timeout.
+    if (not timed_out) and (pol.wall_time_s is not None) and (duration_ms >= int(pol.wall_time_s * 1000) - 50):
+      timed_out = True
+      with contextlib.suppress(Exception):
+        p.kill()
+
+    rc_raw = 124 if timed_out else (p.returncode if p.returncode is not None else 1)
     status, rc, reason = _normalize_status(int(rc_raw), timed_out, enforced["platform"])
+    _ci_diag_write("completed", {
+      "traceId": trace_id,
+      "returncode": int(rc_raw),
+      "timed_out": bool(timed_out),
+      "status": status,
+      "rc_mapped": rc,
+      "reason": reason,
+      "duration_ms": duration_ms,
+      "stdout_len": len(stdout_text),
+      "stderr_len": len(stderr_text),
+      "stdout_sample": stdout_text[:500],
+      "stderr_sample": stderr_text[:500],
+    })
+
     return {"version": 2, "status": status, "rc": rc, "reason": reason,
             "stdout": stdout_text, "stderr": stderr_text, "duration_ms": duration_ms,
             "cmd": cmd, "traceId": trace_id, "enforced": enforced}
   except Exception as e:
     duration_ms = int((time.perf_counter() - t0) * 1000)
+    _ci_diag_write("exception", {
+      "traceId": trace_id,
+      "type": e.__class__.__name__,
+      "msg": str(e),
+      "duration_ms": duration_ms,
+    })
+
     return {"version": 2, "status": _STATUS_INTERNAL, "rc": 1, "reason": f"{e.__class__.__name__}: {e}",
             "stdout": "", "stderr": f"{e.__class__.__name__}: {e}", "duration_ms": duration_ms,
             "cmd": cmd, "traceId": trace_id, "enforced": enforced}
