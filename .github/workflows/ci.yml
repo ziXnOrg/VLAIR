@@ -126,6 +126,7 @@ jobs:
       PYTHONHASHSEED: '0'
       PYTHONPATH: ${{ github.workspace }}
       VLTAIR_SANDBOX_ENABLE_RESTRICTED_LAUNCH: '1'
+      COVERAGE_FILE: coverage-windows.data
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -144,7 +145,7 @@ jobs:
       - name: Python Coverage (pytest-cov)
         shell: pwsh
         run: |
-          python -m pytest -q --cov=orchestrator --cov=cli --cov-report=term --cov-report=xml:coverage-windows.xml --cov-fail-under=85 tests/unit tests/integration
+          pytest -q --cov=orchestrator --cov=cli --cov-report=term --cov-report=xml:coverage-windows.xml --cov-fail-under=85 tests/unit tests/integration
 
       - name: Upload Coverage (Windows)
         if: always()
