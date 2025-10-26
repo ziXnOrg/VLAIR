@@ -1,6 +1,21 @@
 # Agent Orchestration Devlog
 
 
+Date (UTC): 2025-10-26 19:05
+Area: CI|Runtime
+Context/Goal: Strengthen Windows timeout mapping to force rc=124 whenever timeout is detected by duration fallback (Issue #5); re-run CI to validate.
+Actions:
+- Updated exec/sandbox.py to compute rc_raw = 124 if timed_out else (p.returncode if p.returncode is not None else 1).
+- Intention: eliminate ambiguity where Windows sets a non-zero exit code post-limit even when timed_out=True via duration.
+Results:
+- CI run pending at the time of this entry; prior run failed on Windows with INTERNAL_ERROR despite duration fallback.
+Diagnostics:
+- Hypothesis: previous logic used p.returncode when present, causing normalization to INTERNAL_ERROR on Windows.
+Decision(s): Force rc=124 when timed_out=True to guarantee TIMEOUT mapping.
+Follow-ups:
+- Monitor Windows CI; extract diagnostics JSONL showing timed_out=true, status="TIMEOUT", rc_mapped=124, reason="wall timeout", duration_ms≈1000–1200; post to Issue #5.
+
+
 Date (UTC): 2025-10-26 18:10
 Area: CI|Runtime
 Context/Goal: Investigate and resolve Windows CI timeout mapping (Issue #5). Ensure TIMEOUT (rc=124) is returned for wall-time violations on Windows GHA and re-enable the test.

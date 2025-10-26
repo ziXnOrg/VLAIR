@@ -955,7 +955,7 @@ def run_pytests_v2(
     if (not timed_out) and (pol.wall_time_s is not None) and (duration_ms >= int(pol.wall_time_s * 1000)):
       timed_out = True
 
-    rc_raw = p.returncode if p.returncode is not None else (124 if timed_out else 1)
+    rc_raw = 124 if timed_out else (p.returncode if p.returncode is not None else 1)
     status, rc, reason = _normalize_status(int(rc_raw), timed_out, enforced["platform"])
     _ci_diag_write("completed", {
       "traceId": trace_id,
