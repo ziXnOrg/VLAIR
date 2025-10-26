@@ -929,7 +929,10 @@ def run_pytests_v2(
           except Exception as e:
             enforced["phase3"]["fallback_reason"] = f"seccomp init failed: {e}"
 
-      p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=False, env=env, preexec_fn=preexec, cwd=cwd_run)
+      popen_kwargs = dict(stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=False, env=env, preexec_fn=preexec)
+      if cwd_run is not None:
+        popen_kwargs["cwd"] = cwd_run
+      p = subprocess.Popen(cmd, **popen_kwargs)
       # Attach to cgroup after spawn (if created)
       if cgroup_path:
         try:
