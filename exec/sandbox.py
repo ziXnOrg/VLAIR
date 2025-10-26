@@ -259,6 +259,15 @@ def _setup_cgroup_v2(trace_id: str, policy: SandboxPolicy) -> tuple[str | None, 
 
 # ---- Linux seccomp (Phase 3, optional) ----
 
+# Phase 3 (Linux): seccomp-bpf capability detection
+# Requirements:
+#  - Linux kernel with seccomp-bpf (>= 3.5; broadly available on modern distros)
+#  - libseccomp shared library (e.g., libseccomp.so.2) present at runtime
+# Behavior:
+#  - Pure detection: returns (False, reason) when unsupported; caller MUST degrade to Phase 2
+# Determinism:
+#  - No side effects; stable, terse reason strings suitable for surfacing in enforcement.fallback_reason
+
 def _detect_seccomp_lib() -> tuple[bool, str]:
   if _IS_WINDOWS or platform.system() != "Linux":
     return False, "not-linux"
@@ -274,6 +283,14 @@ def _detect_seccomp_lib() -> tuple[bool, str]:
   except Exception as e:
     return False, f"{e.__class__.__name__}: {e}"
 
+
+# Phase 3 (Linux): Apply permissive filter (ALLOW) with explicit TRAP for network syscalls.
+# Limitations:
+#  - Syscall names can vary by architecture; unresolved names are ignored (policy remains permissive).
+#  - Only network syscalls are trapped; all others allowed to minimize breakage of Python/pytest internals.
+#  - TRAP action causes SIGSYS, which we normalize deterministically to SANDBOX_DENIED.
+# Fallback:
+#  - If libseccomp is missing or filter load fails, this preexec is effectively a no-op and caller retains Phase 2 behavior.
 
 def _make_linux_seccomp_preexec_block_net():  # type: ignore[return-type]
   # Install a permissive filter (ALLOW) with explicit TRAP on network-related syscalls.
@@ -338,6 +355,11 @@ def _compose_preexec(funcs):  # type: ignore[return-type]
   return _run_all
 
 
+# Phase 3 (Windows): Restricted token support detection.
+# Notes:
+#  - Presence of CreateRestrictedToken is a proxy for capability; successful spawn can still require privileges
+#    (e.g., SeAssignPrimaryTokenPrivilege, SeIncreaseQuotaPrivilege) at CreateProcessWithTokenW time.
+
 def _detect_restricted_token_support() -> tuple[bool, str]:
   """Best-effort detection for Windows Restricted Token support.
   Returns (detected, reason)."""
@@ -351,6 +373,13 @@ def _detect_restricted_token_support() -> tuple[bool, str]:
   except Exception as e:
     return False, f"{e.__class__.__name__}: {e}"
 
+
+# Phase 3 (Windows): Best-effort restricted token creation probe (no process spawn).
+# Privilege expectations:
+#  - OpenProcessToken(TOKEN_ASSIGN_PRIMARY|TOKEN_DUPLICATE|TOKEN_QUERY) may fail on locked-down environments.
+#  - DuplicateTokenEx for a primary token can also require SeAssignPrimaryTokenPrivilege.
+# Behavior:
+#  - Deterministic outcome with stable reason; callers should surface reason and fall back to Phase 2 when False.
 
 def _win_try_create_restricted_token() -> tuple[bool, str]:
   """Attempt to create a restricted token from current process token.
@@ -472,7 +501,16 @@ if _IS_WINDOWS:
       return job, enforced, f"job config error: {e}"
 
 
-  def _win_spawn_with_restricted_token(cmd: list[str], env: dict[str, str], job: HANDLE | None, cwd: str | None):
+# Phase 3 (Windows): Spawn with restricted primary token (CreateProcessWithTokenW).
+# Behavior:
+#  - Redirects stdout/stderr via CreatePipe; assigns process to an existing Job Object when provided.
+#  - Deterministic error messages include GetLastError (GLE) for diagnosability.
+# Privilege requirements and fallbacks:
+#  - CreateProcessWithTokenW commonly requires SeAssignPrimaryTokenPrivilege and SeIncreaseQuotaPrivilege;
+#    standard users often lack these privileges. On failure, callers MUST fall back to the normal Popen path
+#    and report enforcement.phase3.fallback_reason.
+
+def _win_spawn_with_restricted_token(cmd: list[str], env: dict[str, str], job: HANDLE | None, cwd: str | None):
     """Spawn a child process with a restricted primary token using CreateProcessWithTokenW.
     Returns an object with .stdout/.stderr file objects and .wait(timeout)->rc semantics.
     Raises RuntimeError on failure with a deterministic message.
