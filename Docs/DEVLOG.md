@@ -1,5 +1,22 @@
 # Agent Orchestration Devlog
 
+
+Date (UTC): 2025-10-26 18:10
+Area: CI|Runtime
+Context/Goal: Investigate and resolve Windows CI timeout mapping (Issue #5). Ensure TIMEOUT (rc=124) is returned for wall-time violations on Windows GHA and re-enable the test.
+Actions:
+- Analyzed exec/sandbox.py timeout handling and normalization paths; identified Windows fall-through to INTERNAL_ERROR when TimeoutExpired is not raised.
+- Added deterministic fallback in run_pytests_v2 to set timed_out=True if duration_ms >= wall_time_s*1000.
+- Re-enabled the test in .github/workflows/ci.yml (removed -k exclusion on Windows job).
+- Posted analysis and plan as a comment to Issue #5 with code references and artifact details.
+Results:
+- Local validation deferred (no dependency installs without approval). Expect TIMEOUT mapping to be stable on Windows CI after change.
+Diagnostics:
+- On Windows GHA, TimeoutExpired may sporadically not raise; mapping then fell through to INTERNAL_ERROR. Fallback uses measured wall time to assert timeout deterministically.
+Decision(s): Apply minimal, platform-agnostic fallback; keep diagnostics env-guarded.
+Follow-ups:
+- Push branch and open/refresh PR; validate Windows CI; confirm diagnostics show timed_out=true and rc=124; maintain ≥85% coverage.
+
 Date: 2025-10-20 00:00:00 -06:00
 
 ---

@@ -950,6 +950,11 @@ def run_pytests_v2(
 
     stdout_text, stderr_text = out_buf[0], err_buf[0]
     duration_ms = int((time.perf_counter() - t0) * 1000)
+    # Deterministic fallback: if the measured wall time exceeded the policy limit
+    # but no TimeoutExpired was observed (rare on Windows CI), treat as timeout.
+    if (not timed_out) and (pol.wall_time_s is not None) and (duration_ms >= int(pol.wall_time_s * 1000)):
+      timed_out = True
+
     rc_raw = p.returncode if p.returncode is not None else (124 if timed_out else 1)
     status, rc, reason = _normalize_status(int(rc_raw), timed_out, enforced["platform"])
     _ci_diag_write("completed", {

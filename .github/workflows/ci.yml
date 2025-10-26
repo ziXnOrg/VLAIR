@@ -147,7 +147,7 @@ jobs:
       - name: Python Coverage (pytest-cov)
         shell: pwsh
         run: |
-          pytest -q -k "not test_integration_timeout_enforced" --cov=orchestrator --cov=cli --cov-report=term --cov-report=xml:coverage-windows.xml --cov-fail-under=85 tests/unit tests/integration
+          pytest -q --cov=orchestrator --cov=cli --cov-report=term --cov-report=xml:coverage-windows.xml --cov-fail-under=85 tests/unit tests/integration
 
       - name: Upload Coverage (Windows)
         if: always()
