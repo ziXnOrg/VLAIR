@@ -939,6 +939,21 @@ def run_pytests_v2(
     t_err = threading.Thread(target=lambda: err_buf.__setitem__(0, _read_stream_limited(p.stderr, pol.output_bytes)[0]))
     t_out.start(); t_err.start()
 
+    # Watchdog: enforce wall clock timeout even if subprocess.wait doesn't raise
+    timed_ev = threading.Event()
+    def _wd() -> None:
+      try:
+        # Sleep for the wall time; if process still alive, mark timed_out and kill
+        time.sleep(max(0, float(pol.wall_time_s or 0)))
+        if getattr(p, "poll", None) is not None and p.poll() is None:
+          timed_ev.set()
+          with contextlib.suppress(Exception):
+            p.kill()
+      except Exception:
+        # Best-effort watchdog; never raise
+        pass
+    threading.Thread(target=_wd, daemon=True).start()
+
     try:
       p.wait(timeout=pol.wall_time_s)
     except subprocess.TimeoutExpired:
@@ -947,6 +962,10 @@ def run_pytests_v2(
         p.kill()
     finally:
       t_out.join(); t_err.join()
+
+    # Incorporate watchdog decision
+    if timed_ev.is_set():
+      timed_out = True
 
     stdout_text, stderr_text = out_buf[0], err_buf[0]
     duration_ms = int((time.perf_counter() - t0) * 1000)
