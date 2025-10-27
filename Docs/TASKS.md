@@ -33,6 +33,7 @@
 | 29 | P2-2.5 StaticAnalysis validators | Harden findings schema/validators | Principal Eng | Medium | Pending | 2025-10-27 | 2025-10-31 | orchestrator/schemas/* |
 | 30 | P2-2.6 DebugAgent loop | Implement debug loop for failing tests | Principal Eng | Medium | Pending | 2025-10-27 | 2025-10-31 | agents/debug.py |
 | 31 | P2-2.7/2.8 E2E workflows | Add workflows and validation gates | Principal Eng | High | Pending | 2025-10-27 | 2025-11-02 | tests/integration/* |
+| 32 | Docs: Harden Codex Agent Charter | Expand AGENTS.MD with lifecycle, determinism, security, observability, STOP gates, innovation addenda | Principal Eng | Medium | In Progress | 2025-10-27 | 2025-10-28 | AGENTS.MD; PR pending |
 
 Notes:
 - All tasks must follow the Production Agentic Workflow (Understanding -> Planning -> Context -> Implementation -> Verification -> Reflection) and re-check Blueprint + rules at batch end.
