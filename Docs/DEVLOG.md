@@ -1,6 +1,55 @@
 # Agent Orchestration Devlog
 
 
+Date (UTC): 2025-10-27 01:25
+Area: Docs|Agents|Standards|Research
+Context/Goal: Harden AGENTS.MD (Codex Agent Charter) with lifecycle, determinism, security/privacy, observability, decision trees, and gates; align with VLTAIR rules and incorporate 2025 best practices.
+Actions:
+- Analyzed AGENTS.MD vs .augment/rules/*, Docs/Blueprint.md, production-agentic-workflow.md
+- Performed targeted web research (2025): OpenAI Codex best practices; deterministic agent behavior; agent testing/evaluation; rules-file usage patterns
+- Appended sections to AGENTS.MD: Lifecycle & Contracts; Determinism & Reproducibility; Tooling & Budget Enforcement; Security & Privacy; Observability; Decision Trees & STOP Gates; Quality Gates & Commands; Innovation Addenda
+Research sources:
+- OpenAI: "How Codex ran OpenAI DevDay 2025" (agent architecture practices)
+  [developers.openai.com/codex-at-devday](https://developers.openai.com/blog/codex-at-devday/)
+- OpenAI: "Introducing Codex" (2025 update notes)
+  [openai.com/introducing-codex](https://openai.com/index/introducing-codex/)
+- Salesforce: "Five levels of determinism" (determinism maturity)
+  [salesforce.com/five-levels-of-determinism](https://www.salesforce.com/agentforce/five-levels-of-determinism/)
+- Kubiya: "What is deterministic AI?" (benefits/limits)
+  [kubiya.ai/what-is-deterministic-ai](https://www.kubiya.ai/blog/what-is-deterministic-ai)
+- Google Cloud: "Evaluating AI Agents with ADK" (evaluation harness)
+  [medium.com/google-cloud/adk-evaluating-ai-agents](https://medium.com/google-cloud/an-open-book-evaluating-ai-agents-with-adk-c0cff7efbf00)
+- ServiceNow: "AI Agent Testing: Building Trust in Uncertainty" (testing strategy)
+  [servicenow.com/ai-agent-testing](https://www.servicenow.com/community/now-assist-articles/ai-agent-testing-building-trust-in-uncertainty/ta-p/3351244)
+- Rules files in IDE agents: Cursor/Claude Code usage (project rules always-on)
+  [builder.io/cursor-tips](https://www.builder.io/blog/cursor-tips)
+  [builder.io/claude-code](https://www.builder.io/blog/claude-code)
+Results:
+- AGENTS.MD extended with actionable, measurable guidance consistent with VLTAIR standards; innovation items added (prompt fingerprinting, decision ledger, deterministic LLM wrapper, offline mode, risk-tier tool gating)
+Decisions:
+- Treat prompt fingerprinting + decision ledger as future CI/policy tasks (spec documented; implementation to follow)
+Follow-ups:
+- Open documentation PR with evidence and reference to this entry; keep ≥85% coverage unaffected (docs-only change)
+
+Date (UTC): 2025-10-27 01:10
+Area: Docs|Agents|Research
+Context/Goal: Complete AGENT-TYPES.MD Batches 2–6 (cross-agent chains; advanced heuristics/policies; operationalization; DX/migration/CI; acceptance checklists + schema RFC) and record results.
+Actions:
+- Batch 2: Documented deterministic cross-agent workflows (A: Feature Add, B: Failing Test Fix), beam/best-first search, candidate trees, budgets/halting, observability/security gates.
+- Batch 3: Added advanced heuristics: Beam–MCTS hybrid (fixed UCT), frozen learned scorers (vendored, deterministic), agent-specific world-class upgrades (AST minimality, taint patterns, spectrum localization), cross-agent consensus via shared scoreboard; expanded observability/metrics.
+- Batch 4: Operationalization: context versioning/merge (WAL-first, base/new hashes, merge_conflict artifacts), hierarchical planning, policy versioning/rollouts, offline evaluation harness/scorecards, safety/red-team patterns, performance controls, cross-language adapters.
+- Batch 5: DX & CI/policy tooling: workspace conventions, dry-run/eval commands (design), policy registry/governance, CI stages/artifacts, migration playbooks (TestAgent naming), SLO dashboards, reproducibility locks, data retention, release packaging, onboarding.
+- Batch 6: Acceptance checklists per agent/workflow; minimal, versioned schema RFC for artifacts (candidate_list, selection_decision, workflow_trace, budget_denied, policy_denied, merge_conflict) and envelopes; rollout/readiness checklist.
+Results:
+- `AGENT-TYPES.MD` expanded with Batches 2–6; no runtime behavior changes.
+- Clear path from research → design → implementation readiness with deterministic, security-first posture.
+Decisions:
+- Treat TestRunner vs TestGen naming conflict as a discrete refactor task; keep docs using unambiguous names.
+- Use policy bundles to gate advanced features (Beam–MCTS, taint, spectrum) with canary/shadow rollouts.
+Follow-ups:
+- Open tasks to: (1) add schema validators for new artifacts; (2) wire spans and field redaction across agents; (3) implement candidate branching and selection with deterministic scorers; (4) create golden eval suites; (5) plan TestAgent rename PR with registry migration.
+
+
 Date (UTC): 2025-10-27 00:41
 Area: Runtime|Agents|Tests|Docs
 Context/Goal: Implement P2-2.3 TestGenAgent; open PR with deterministic implementation and tests.
