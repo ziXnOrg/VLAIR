@@ -1,6 +1,43 @@
 # Agent Orchestration Devlog
 
 
+Date (UTC): 2025-10-27 00:41
+Area: Runtime|Agents|Tests|Docs
+Context/Goal: Implement P2-2.3 TestGenAgent; open PR with deterministic implementation and tests.
+Actions:
+- Implemented TestGenAgent returning payload.delta.doc (path+content) with stable header and filenames.
+- Added prompts/test_gen.md (temp=0, fixed seeds, coverage-oriented templates, no external I/O).
+- Added tests/unit/testgen_test.py (schema validation, compile-only integration, determinism).
+Results:
+- Lint: ruff check on changed files → clean.
+- Format: ruff format applied; ruff format --check → clean.
+- Type: mypy --strict -m orchestrator.agents.test_gen → success.
+- Focused tests: py -3 -m pytest tests/unit/testgen_test.py -q -q --disable-warnings --maxfail=1 --cov=orchestrator --cov=cli --cov-report=term-missing → all tests passed; test_gen.py 100% lines.
+Decision(s):
+- Keep Phase 2 output as full-file content; defer artifacts/coverage hints to a later batch.
+Follow-ups:
+- Monitor PR #9 CI (full suite, ≥85% overall coverage); address feedback quickly.
+
+
+Date (UTC): 2025-10-27 00:40
+Area: Docs|Agents|Research
+Context/Goal: Add AGENT-TYPES.MD (Batch 1) detailing deterministic procedures and branching strategies for CodeGen, StaticAnalysis, TestRunner, TestGen, and Debug agents aligned with Phase 2.
+Actions:
+- Inspected current agent implementations: orchestrator/agents/{base.py, codegen.py, static_analysis.py, test_agent.py, test_gen.py}.
+- Authored AGENT-TYPES.MD with per-agent scope, inputs/outputs, deterministic procedures, candidate branching and selection heuristics, observability/security notes, and budgets/timeouts.
+- Cross-referenced redaction utilities and CI timeout signals to ensure consistency with sandbox behavior and diagnostics.
+Results:
+- New document created: AGENT-TYPES.MD (Batch 1 complete). No runtime behavior changed.
+- Identified naming conflict: both TestRunner and TestGen export class name `TestAgent` — queued refactor recommendation in doc.
+Decisions:
+- Use planned naming in docs (TestRunner, TestGen) to avoid confusion; leave code rename to a separate task.
+Follow-ups:
+- Implement candidate branching + selection in CodeGen/Debug/TestGen with deterministic scoring.
+- Add artifacts/validators where missing (analysis, test_result, coverage_hint).
+- Wire spans and redaction hooks in each agent for observability and privacy.
+- Plan Batch 2 cross-agent workflows under orchestrator DAGs (StaticAnalysis → CodeGen → TestGen → TestRunner → Debug) with strict budgets.
+
+
 Date (UTC): 2025-10-27 00:22
 Area: Runtime|Agents|CI|Docs
 Context/Goal: Merge P2-2.2 (CodeGenAgent) to main and record final CI evidence; close out task #26.
