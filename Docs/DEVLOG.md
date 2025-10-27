@@ -1,6 +1,26 @@
 # Agent Orchestration Devlog
 
 
+Date (UTC): 2025-10-27 00:05
+Area: Runtime|Agents|Tests|Docs
+Context/Goal: Implement P2-2.2 CodeGenAgent specifics; open PR with deterministic implementation, prompts, and tests.
+Actions:
+- Implemented deterministic CodeGenAgent returning payload.delta.doc (path+content) with typed surface.
+- Added prompts/codegen.md (temp=0, fixed seeds, minimal change surface, redaction guardrails).
+- Added tests/unit/codegen_test.py (create/modify/validation + compile check for .py content).
+- Opened PR #8 to main: feature/p2-2-2-codegen-agent.
+Results:
+- Focused tests: `python -m pytest tests/unit/codegen_test.py -v --cov=orchestrator --cov=cli --cov-report=term-missing` → 3 passed.
+- Full suite: `python scripts/run_tests.py` → 86 passed, 4 skipped, 0 failed; ~11.9s; 2 warnings (unchanged).
+- Coverage: TOTAL 85% (gate met); orchestrator/agents/codegen.py 100%.
+- Lint/Type: `ruff check orchestrator/agents/codegen.py` → clean; `mypy --strict -m orchestrator.agents.codegen` → success.
+Decision(s):
+- Keep Phase 2 delta as full-file content; reserve unified diff for later batch.
+- Maintain deterministic, minimal-surface edits; no external API changes.
+Follow-ups:
+- Land PR #8 once CI passes; then proceed to P2-2.3 TestGen.
+
+
 Date (UTC): 2025-10-26 23:37
 Area: Runtime|Docs|CI
 Context/Goal: P2-2.1 merged to main via PR #7; record final verification evidence and update TASKS.
