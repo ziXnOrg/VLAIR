@@ -27,7 +27,7 @@
 | 23 | E2E dispatch review | Add end-to-end dispatch test and perform code review | Principal Eng | Medium | Completed | 2025-10-27 | 2025-10-28 | tests/integration/* |
 | 24 | README cross-links | Add redaction/query CLI usage cross-links | Principal Eng | Low | Completed | 2025-10-27 | 2025-10-28 | README.md |
 | 25 | P2-2.1 Agent interfaces | Finalize agent interfaces and registry | Principal Eng | High | Completed | 2025-10-27 | 2025-10-29 | orchestrator/agents/base.py; orchestrator/core/registry.py; PR #7 (merged 2025-10-26T23:37:29Z UTC) |
-| 26 | P2-2.2 CodeGenAgent specifics | Define workflow specifics and prompts | Principal Eng | Medium | In Progress | 2025-10-27 | 2025-10-30 | agents/codegen.py; P2/notes/*; PR #8 (opened 2025-10-27T00:05:46Z UTC) |
+| 26 | P2-2.2 CodeGenAgent specifics | Define workflow specifics and prompts | Principal Eng | Medium | Completed | 2025-10-27 | 2025-10-30 | agents/codegen.py; P2/notes/*; PR #8 (merged 2025-10-27T00:21:59Z UTC) |
 | 27 | P2-2.3 TestGen flow | Implement generation flow and payloads | Principal Eng | Medium | Pending | 2025-10-27 | 2025-10-30 | agents/test_agent.py |
 | 28 | P2-2.4 TestExec sandbox | Implement sandboxed execution and logs | Principal Eng | Medium | Pending | 2025-10-27 | 2025-10-31 | exec/sandbox.py |
 | 29 | P2-2.5 StaticAnalysis validators | Harden findings schema/validators | Principal Eng | Medium | Pending | 2025-10-27 | 2025-10-31 | orchestrator/schemas/* |
