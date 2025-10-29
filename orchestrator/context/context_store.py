@@ -1,4 +1,6 @@
 from __future__ import annotations
+import os
+
 
 from typing import List, Optional, Sequence, Union, Dict, Any, TYPE_CHECKING
 
@@ -9,15 +11,50 @@ Mode = Literal["dense", "sparse", "hybrid"]
 if TYPE_CHECKING:
   from .vesper_context_store import VesperContextStore
 from .models import CodeDocument, TextDocument
+
+class _NullContextBackend:
+  def initialize(self, config: Dict[str, str]) -> None:
+    return None
+
+  def open_scope(self, name: str, schema_json: Optional[str] = None) -> None:
+    return None
+
+  def add(self,
+          ids: Sequence[int],
+          vectors: Sequence[Union[Sequence[float], Any]],
+          metadata: Sequence[Dict[str, str]]) -> None:
+    return None
+
+  def search(self,
+             text: str = "",
+             embedding: Optional[Union[Sequence[float], Any]] = None,
+             *,
+             k: int = 10,
+             mode: "Mode" = "hybrid",
+             filters: Optional[Union[Dict[str, str], str]] = None,
+             rrf_k: float = 60.0,
+             dense_weight: float = 0.5,
+             sparse_weight: float = 0.5,
+             rerank_factor: int = 10) -> List[SearchResult]:
+    return []
+
 from .idempotency import make_idempotency_key
 
 
 class ContextStore:
   def __init__(self, backend: Optional["VesperContextStore"] = None) -> None:
     if backend is None:
-      # Lazy import to avoid importing pyvesper at module load (tests can inject mocks)
-      from .vesper_context_store import VesperContextStore  # type: ignore
-      self._backend = VesperContextStore()
+      # Lazy import to avoid importing pyvesper at module load;
+      # fall back to a null backend in test mode or when explicitly requested.
+      try:
+        from .vesper_context_store import VesperContextStore  # type: ignore
+        self._backend = VesperContextStore()
+      except Exception:
+        if (os.environ.get("VLTAIR_TEST_MODE", "") == "1" or
+            os.environ.get("VLTAIR_CONTEXT_BACKEND", "").lower() == "null"):
+          self._backend = _NullContextBackend()
+        else:
+          raise
     else:
       self._backend = backend
 
