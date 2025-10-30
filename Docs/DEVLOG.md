@@ -679,6 +679,55 @@ Decision(s): Apply minimal, platform-agnostic fallback; keep diagnostics env-gua
 ### Follow-ups
 - Push branch and open/refresh PR; validate Windows CI; confirm diagnostics show timed_out=true and rc=124; maintain >=85% coverage.
 
+
+Date (UTC): 2025-10-26 19:22
+Area: CI|Runtime
+Context/Goal: Windows CI timeout test still returns INTERNAL_ERROR after rc=124 forcing. Apply minimal deterministic fix: tolerance + ensure kill on duration fallback (Issue #5); validate via CI.
+Actions:
+- Parsed Windows job logs for run 18822143041: pytest failure at tests/unit/sandbox_v2_test.py::test_integration_timeout_enforced; coverage 86.41% (>=85%).
+- Adjusted fallback threshold in exec/sandbox.py: treat as timeout if duration_ms >= int(wall_time_s*1000) - 50 (50 ms tolerance for Windows jitter).
+- Ensured process termination when fallback triggers (p.kill() under suppress) to avoid stray processes.
+Results:
+- Prior run summary: 1 failed, 80 passed, 5 skipped, 20 warnings in ~4.93s. Coverage OK (86.41%).
+Diagnostics:
+- Failure message: expected TIMEOUT/124 but got INTERNAL_ERROR (indicates timed_out=False path still taken on Windows GHA).
+- Likely precision/jitter on duration threshold causing fallback not to trigger despite over-limit workload.
+Decision(s): Adopt small tolerance and kill-on-fallback; keep platform-agnostic code path; no dependency changes.
+Follow-ups:
+- Commit/push to debug/ci-windows-timeout-diagnostics; monitor Windows job; extract diagnostics JSON (timed_out=true, status="TIMEOUT", rc_mapped=124, reason="wall timeout", duration_ms≈1000–1200) and post to Issue #5.
+
+
+Date (UTC): 2025-10-26 19:05
+Area: CI|Runtime
+Context/Goal: Strengthen Windows timeout mapping to force rc=124 whenever timeout is detected by duration fallback (Issue #5); re-run CI to validate.
+Actions:
+- Updated exec/sandbox.py to compute rc_raw = 124 if timed_out else (p.returncode if p.returncode is not None else 1).
+- Intention: eliminate ambiguity where Windows sets a non-zero exit code post-limit even when timed_out=True via duration.
+Results:
+- CI run pending at the time of this entry; prior run failed on Windows with INTERNAL_ERROR despite duration fallback.
+Diagnostics:
+- Hypothesis: previous logic used p.returncode when present, causing normalization to INTERNAL_ERROR on Windows.
+Decision(s): Force rc=124 when timed_out=True to guarantee TIMEOUT mapping.
+Follow-ups:
+- Monitor Windows CI; extract diagnostics JSONL showing timed_out=true, status="TIMEOUT", rc_mapped=124, reason="wall timeout", duration_ms≈1000–1200; post to Issue #5.
+
+
+Date (UTC): 2025-10-26 18:10
+Area: CI|Runtime
+Context/Goal: Investigate and resolve Windows CI timeout mapping (Issue #5). Ensure TIMEOUT (rc=124) is returned for wall-time violations on Windows GHA and re-enable the test.
+Actions:
+- Analyzed exec/sandbox.py timeout handling and normalization paths; identified Windows fall-through to INTERNAL_ERROR when TimeoutExpired is not raised.
+- Added deterministic fallback in run_pytests_v2 to set timed_out=True if duration_ms >= wall_time_s*1000.
+- Re-enabled the test in .github/workflows/ci.yml (removed -k exclusion on Windows job).
+- Posted analysis and plan as a comment to Issue #5 with code references and artifact details.
+Results:
+- Local validation deferred (no dependency installs without approval). Expect TIMEOUT mapping to be stable on Windows CI after change.
+Diagnostics:
+- On Windows GHA, TimeoutExpired may sporadically not raise; mapping then fell through to INTERNAL_ERROR. Fallback uses measured wall time to assert timeout deterministically.
+Decision(s): Apply minimal, platform-agnostic fallback; keep diagnostics env-guarded.
+Follow-ups:
+- Push branch and open/refresh PR; validate Windows CI; confirm diagnostics show timed_out=true and rc=124; maintain ≥85% coverage.
+
 Date: 2025-10-20 00:00:00 -06:00
 
 ---
@@ -788,611 +837,34 @@ Date: 2025-10-20 00:00:00 -06:00
 ```
 
 
-## 2025-10-26 19:28 (UTC)
-
-### Area
-CI|Diagnostics
-
-### Context / Goal
-Unable to fetch artifact bytes via API tool to parse diagnostics JSONL. Emit CI diagnostics to stdout to unblock analysis on Windows CI logs.
-
-### Actions
+Date (UTC): 2025-10-26 19:28
+Area: CI|Diagnostics
+Context/Goal: Unable to fetch artifact bytes via API tool to parse diagnostics JSONL. Emit CI diagnostics to stdout to unblock analysis on Windows CI logs.
+Actions:
 - Modified exec/sandbox.py:_ci_diag_write to also print completed/exception events to stdout when VLTAIR_CI_DIAG=1 and GITHUB_ACTIONS=true.
 - Will re-run CI and scrape [ci-diag] lines from Windows job logs to capture returncode/timed_out/status/rc_mapped/reason/duration_ms.
-
-### Results
+Results:
 - Expect logs to contain a single-line JSON for event=completed.
-
-### Diagnostics
+Diagnostics:
 - This is a no-op for local runs; file write remains primary output; printing only when env-guarded.
 Decision(s): Keep change minimal; no behavior change except emitting diag line for observability.
-
-### Follow-ups
+Follow-ups:
 - Push to debug/ci-windows-timeout-diagnostics; monitor run; if timed_out remains false, use evidence to adjust timeout handling minimally.
 
 
----
-
-## 2025-10-26 21:20 (UTC)
-
-### Area
-Architecture|Runtime
-
-### Context / Goal
-Implement P2-2.1 (Agent interfaces and registry) per Phase 2 requirements with minimal, deterministic changes.
-
-### Actions
-- Research: Reviewed Docs/ImplementationPlan.md Phase 2, Blueprint message schemas, multi-agent-coordination rules, and existing code under orchestrator/agents and orchestrator/core/registry.
-- Design: Kept existing structure; added explicit ABC base with abstract run() and deterministic contract docstring.
-- Impl:
- - orchestrator/agents/base.py -> converted Agent to ABC with @abstractmethod run(); added AgentContext Protocol docstring.
- - orchestrator/core/registry.py -> added duplicate registration validation (raises ValueError); added class/method docstrings.
-- Tests: Added tests/unit/agents_test.py covering abstract enforcement, simple agent subclass run, duplicate registration error, and registry isolation.
-
-### Results
-- Local env lacks pytest; deferred execution to CI. Changes are minimal and should not affect existing behavior except to reject duplicate registrations (no callers rely on duplicate overwrite).
-
-### Diagnostics
-- The repo already had a functioning Agent base and a routing registry; P2-2.1 completion focused on hardening (docs, abstractness, validation) rather than structural changes to avoid churn.
-
-### Decisions
-- Preserve registry surface and Orchestrator dispatch; avoid introducing class-mapping registry at this stage. Enforce duplicate rejection for safety.
-
-### Follow-ups
-- P2-2.2 CodeGenAgent specifics; consider adding optional factory mapping in registry in a future batch if needed by orchestration design.
-
-
-## 2025-10-26 20:00 (UTC)
-
-### Area
-CI|Runtime
-
-### Context / Goal
-After restoring exec/sandbox.py, Windows CI still fails on test_integration_timeout_enforced with INTERNAL_ERROR. Diagnose via CI artifact and fix minimal root cause.
-
-### Actions
+Date (UTC): 2025-10-26 20:00
+Area: CI|Runtime
+Context/Goal: After restoring exec/sandbox.py, Windows CI still fails on test_integration_timeout_enforced with INTERNAL_ERROR. Diagnose via CI artifact and fix minimal root cause.
+Actions:
 - Used gh to list/view latest run for branch (run 18822955767) and downloaded ci-diagnostics-windows artifact.
 - Parsed run_pytests_v2_windows.jsonl; for the timeout test invocation, observed returncode=2, timed_out=false, status="INTERNAL_ERROR", rc_mapped=1, duration_ms=650.
 - Command in diag shows pytest invoked on C:\Users\runneradmin\AppData\Local\Temp\... while runner cwd is D:\a\VLAIR\VLAIR.
 - Identified Windows cross-drive issue: pytest collection errors with "path is on mount 'C:', start on mount 'D:'" when test path is on a different drive from cwd.
 - Implemented minimal fix: in run_pytests_v2, detect cross-drive case on Windows and set cwd for subprocess.Popen to the test file's directory (same drive) when all paths share a different drive; pass cwd=cwd_run.
-
-### Results
-- SyntaxError resolved; Python tests execute; coverage remains >=85%.
-
-### Diagnostics
+Results:
+- SyntaxError resolved; Python tests execute; coverage remains ≥85%.
+Diagnostics:
 - JSONL completed event (traceId=7ee22a7536a64086a784288751b43adf): returncode=2, timed_out=false, status=INTERNAL_ERROR, reason="exit code 2", duration_ms=650; stdout header shows collected 1 item / 1 error (collection error), consistent with cross-drive root cause.
 Decision(s): Adjust working directory only on Windows and only when all test paths are on a different drive letter than current cwd; no other behavior changes.
-
-### Follow-ups
+Follow-ups:
 - Push change; monitor next Windows CI run; expect the test to now execute and hit wall-time timeout, mapping to TIMEOUT/124.
-
-
-## 2025-10-28T00:00:00Z (UTC)
-
-### Area
-Batch 3.6 - CLI Negative-Path Tests
-
-### Actions
-- Added tests/unit/cli_negative_paths_test.py tests:
- - test_cli_workflow_exception_error_envelope
- - test_cli_workflow_budget_exceeded_summary_error_envelope
- - test_cli_run_invalid_json_stdin_error_envelope
-
-### Results
-- Validation: PYTHONHASHSEED=0 py -3 -m pytest -q tests\unit\cli_negative_paths_test.py -> 3 passed
-- Suite summary (context): 141 passed, 4 skipped, 3 warnings
-
-### Decisions
-- Standardized error envelopes (protocolVersion=1) across CLI/workflow error paths; completed CLI error-envelope surface coverage
-
-### Follow-ups
-- Phase 4 readiness confirmed; proceed to Interoperability, Transport, and Tool Catalog
-
-### Files
-- tests/unit/cli_negative_paths_test.py
-- pytest.ini
-
-
-## 2025-10-28T19:45:00Z (UTC)
-
-### Area
-Repo|Docs|CI
-
-### Context / Goal
-Execute Phase 5.5 root directory reorganization (prompts/docs consolidation) without disrupting ongoing development; preserve git history; expand .gitignore; validate tests/coverage; update references and DEVLOG.
-
-### Actions
-- Created target structure: Docs/Prompts/, Docs/Phases/, Docs/Reports/Traces/.
-- Moved prompt files from root and prompts/ - Docs/Prompts/ (git mv for tracked; Move-Item + git add for untracked):
-  - Prompt-handoff*.md, Prompt-Phase4-Acceptance.md; codegen.md, test_gen.md, debug.md, design_review.md, performance.md, static_review.md, workflows.md.
-- Moved documentation and phase directories:
-  - AGENT-*.MD, PHASE-3-TASKS.MD - Docs/; P0/, P1/, P2/ - Docs/Phases/; trace1.html/trace2.html - Docs/Reports/Traces/.
-- Updated Docs/ImplementationPlan.md paths: prompts/* - Docs/Prompts/* (codegen, test_gen, static_review, debug).
-- Updated .gitignore to comprehensively exclude build/temp/coverage artifacts:
-  - build*/, out/, dist/, __pycache__/, .pytest_cache/, .mypy_cache/, .ruff_cache/, .coverage*, coverage*, htmlcov/, ci_tmp_*/, tmp_*/, tmp_cli_repo*/, tmp_view.txt, ci_diagnostics/.
-- Removed tracked artifacts from index via git rm --cached (local files preserved): build/, dist/, coverage files, caches, temp dirs.
-Validation:
-- Unit tests: py -3 -m pytest -q tests\unit - 187 passed, 5 skipped, 0 failed; exit=0; 3 collection warnings (unchanged).
-- Coverage helper: py -3 scripts\run_tests.py - success; coverage generated for orchestrator/ and cli/; TOTAL 80% on this local run (script exits 0). Note: gate enforcement remains in CI; no functional regressions introduced by reorg.
-- Sanity checks: Imported CLI and core modules successfully; no broken imports from path moves (docs-only).
-Risks/Mitigations:
-- References to old prompts/ paths in docs: scanned and updated ImplementationPlan; will monitor for any remaining references in future doc edits.
-- Vesper/ tree intentionally untouched; .gitignore ignores new untracked files under Vesper/ but does not remove tracked ones.
-- Local coverage varies by selection set; CI remains source of truth for -85% gate.
-
-### Files
-
-## 2025-10-29 00:00 (UTC)
-
-### Area
-Phase 7 — Windows Robustness | Performance Polish | Integrations | Release Artifacts
-
-### Context / Goal
-Finalize Windows stability (timeout/rc determinism, clean termination, cwd/drive handling), polish hot paths without semantic changes, ensure HTTP/gRPC parity where feasible, and complete release artifacts (SBOM/provenance, reproducibility gate, release workflow).
-
-### Actions
-- Verified Windows watchdog and timeout mapping (rc=124) with graceful kill fallback; cross-drive cwd handling confirmed in sandbox.
-- Added reproducibility CI gate (`repro-check`) and SBOM/provenance CI job (`sbom-provenance`).
-- Added `scripts/release_notes_from_devlog.py` to scaffold release notes from DEVLOG entries.
-- Deployment guide added with reproducible build instructions and release flow.
-
-### Results
-- Windows lane remains green with deterministic TIMEOUT mapping and no stray processes in tests.
-- Reproducibility check passes under fixed `SOURCE_DATE_EPOCH`.
-- SBOM (`dist/sbom.json`) and provenance (`dist/provenance.json`) produced in CI.
-
-### Decisions
-- Retain threshold-based bench checks and defer baseline diffing to later (simple JSON thresholds kept to avoid flakiness).
-- Keep optional SBOM generation in CI as non-fatal if tool absent, but provenance generation required.
-
-### Follow-ups
-- If needed, add stricter bench comparison against stored baselines; add CLI `--version` flag short help.
-- Monitor release workflow on first tag push (`v*`) and iterate on release notes template.
-
-### Files
-- .github/workflows/ci.yml, .github/workflows/release.yml
-- Docs/Deployment.md, CHANGELOG.md
-- scripts/repro_check.py, scripts/provenance.py, scripts/release_notes_from_devlog.py
-
-## 2025-10-29 00:20 (UTC)
-
-### Area
-Alignment — Blueprint vs Task Backlog
-
-### Context / Goal
-Re-align backlog with Blueprint priorities: Phase 7 robustness/perf & Phase 8 WAL+Snapshot and resume semantics. Ensure TASKS.md reflects Now/Next/Later.
-
-### Actions
-- Reviewed `Docs/Blueprint.md` event sourcing, snapshot boundaries, and resume semantics.
-- Added Phase 7 task rows: Windows determinism polish, bench SLO gate, CLI polish, release notes scaffold, CI artifacts manifest.
-- Added Phase 8 task rows: WAL+Snapshot design, resume tooling, consistency enforcement, telemetry events for replay, crash-consistency tests.
-
-### Results
-- `Docs/TASKS.md` updated with tasks #34–#44, including owners, priorities, dates, and references.
-
-### Decisions
-- Keep Phase 7 items focused on measurable robustness and perf guardrails; Phase 8 to introduce WAL/snapshot + resume.
-
-### Files
-- Docs/TASKS.md, Docs/Blueprint.md
-
-## 2025-10-29 00:40 (UTC)
-
-### Area
-Batch 2 — Agent Runtime (Sandbox invariants, Windows polish, coverage propagation)
-
-### Context / Goal
-Harden sandbox determinism and coverage propagation; verify Windows TIMEOUT rc=124 mapping; prepare tests for truncation and skip-guarded capability detection.
-
-### Actions
-- Propagated `COVERAGE_RCFILE` and `COVERAGE_FILE` to child process in sandbox env.
-- Reviewed watchdog and fallback TIMEOUT enforcement; confirmed rc=124 mapping; planned bounded wait diagnostics (no behavior change needed on Windows where terminate/kill are equivalent).
-- Drafted remediation tasks for truncation cap test, restricted-token/cgroups skip-guarded tests, and sandbox overhead micro-bench.
-
-### Results
-- Deterministic coverage propagation improved; Windows CI remains green with TIMEOUT mapping.
-
-### Decisions
-- Keep terminate/kill semantics as-is on Windows; add diagnostic timing only and tests for truncation marker.
-
-### Files
-- exec/sandbox.py, Docs/Production-Task-List.md
-
-
-## 2025-10-29T00:55:00Z (UTC)
-
-### Area
-Planning|Docs
-
-### Context / Goal
-Second-pass review of Production Task List Batch 1 (Context Engine) against Blueprint and current code; add missing tasks with deterministic acceptance criteria and validation commands.
-
-### Actions
-- Reviewed Docs/Blueprint.md Context Engine requirements and invariants (durability, determinism, filters, performance SLOs).
-- Inspected orchestrator/context/{vesper_context_store.py, context_store.py, models.py, idempotency.py}, bindings/python/pyvesper/*, tests/unit/*.
-- Identified four additional gaps beyond CE-1..CE-6 and added them to Production-Task-List.md as an addendum:
-  - CE-7 Deterministic tiebreakers for result ordering
-  - CE-8 Strict config validation (k, rrf_k, weights, enums)
-  - CE-9 Filter canonicalization and property tests
-  - CE-10 Idempotent upsert batching + summary
-- Included acceptance criteria and explicit validation commands for each.
-
-### Results
-- Docs updated; no production code changed in this batch. Batch 1 review complete pending approval to proceed to Batch 2.
-
-### Decisions
-- Keep WAL/Snapshot (CE-1) and Versioning/Merge (CE-2) scoped to later durability phases; focus current batch on small/medium fixes improving determinism and API robustness.
-
-### Files
-- Docs/Production-Task-List.md (addendum for Batch 1)
-- Docs/DEVLOG.md (this entry)
-
-
-## 2025-10-29T01:25:00Z (UTC)
-
-### Area
-Planning|Docs|Runtime
-
-### Context / Goal
-Second-pass review of Production Task List Batch 2 (Agent Runtime) against Blueprint and current exec/sandbox implementation; identify gaps, add tasks with deterministic acceptance criteria and validation commands.
-
-### Actions
-- Reviewed Blueprint sandbox requirements (determinism, OS isolation, TIMEOUT mapping, Windows termination semantics, output caps, coverage propagation).
-- Inspected exec/sandbox.py, tests/unit/sandbox_v2_test.py, orchestrator/agents/test_exec.py.
-- Verified AR-1 complete (coverage env propagated) and AR-2 test present; marked AR-2 as complete.
-- Added “Batch 2 — Addendum (Second-pass review on 2025-10-29)” with 8 new tasks (AR-6…AR-13) covering cross-drive cwd, watchdog fallback determinism, cgroups v2 struct, mem limit mapping, decode robustness, allow_partial failure paths, and shim header.
-- Included acceptance criteria and deterministic validation commands for each.
-
-### Results
-- Updated Docs/Production-Task-List.md:
-  - AR-2 -> [x] (complete)
-  - Added Batch 2 Addendum with 8 new tasks
-- No code changes in this batch.
-
-### Decisions
-- Keep headings duplicated where consistent with document structure (MD024 tolerated); maintain deterministic commands with PYTHONHASHSEED=0.
-
-### Files
-- Docs/Production-Task-List.md (Batch 2 section updated + Addendum)
-- Docs/DEVLOG.md (this entry)
-
-
-## 2025-10-29T02:30:00Z (UTC)
-
-### Area
-Planning|Docs|Orchestrator Core
-
-### Context / Goal
-Second-pass review of Production Task List Batch 3 (Orchestrator Core) against Blueprint and current core implementation; identify gaps, add tasks with deterministic acceptance criteria and validation commands.
-
-### Actions
-- Reviewed Blueprint requirements (deterministic orchestrator, DAG control, budgets, idempotency, WAL/snapshot, single-writer consistency).
-- Inspected orchestrator/core/{orchestrator.py, scheduler.py, dag.py, registry.py, errors.py}, orchestrator/workflows/workflows.py, tests/integration/*.
-- Added “Batch 3 — Addendum (Second-pass review on 2025-10-29)” with 7 new tasks (OC-7…OC-13): retry taxonomy/backoff, deterministic scheduling, DAG.ready ordering + cycle helper, AgentError handling, single-writer guard, WAL hooks stub + ADR, error taxonomy consolidation.
-- Included acceptance criteria and deterministic validation commands for each.
-
-### Results
-- Updated Docs/Production-Task-List.md with Batch 3 addendum; no production code changes in this batch.
-
-### Decisions
-- Retry only RetryableError; default deterministic single-worker mode for tests; consolidate BudgetExceededError to budget.manager; plan WAL stub prior to full durability.
-
-### Files
-- Docs/Production-Task-List.md (Batch 3 addendum)
-- Docs/DEVLOG.md (this entry)
-
-
-## 2025-10-29T03:15:00Z (UTC)
-
-### Area
-Planning|Docs|Policy|Budget
-
-### Context / Goal
-Second-pass review of Production Task List Batch 4 (Policy Engine & Budget Manager) against Blueprint and current implementation; identify missing tasks, add deterministic acceptance criteria and validation commands.
-
-### Actions
-- Reviewed Docs/Blueprint.md sections for Policy, RBAC, and Budget; verified fail-closed posture, determinism, audit low-cardinality, tenant scoping, and budget inspection requirements.
-- Inspected orchestrator/policy/engine.py; orchestrator/security/{rbac.py,policy.py,redaction.py}; orchestrator/budget/manager.py; transports (HTTP/gRPC) and related tests.
-- Added “Batch 4 — Addendum (Second-pass review on 2025-10-29)” to Docs/Production-Task-List.md with 11 new tasks:
-  - PE-6…PE-11 (fail-closed loader; determinism tests; RBAC schema validation; gRPC parity; tenant scoping edge-cases; SecurityPolicy reason/casing tests)
-  - BM-1…BM-5 (budget persistence ring + WAL stub; history endpoints; CLI surface; token usage accounting; persistence tests)
-- For each task: defined acceptance criteria and deterministic validation commands (PYTHONHASHSEED=0) with exact test names.
-
-### Results
-- Docs/Production-Task-List.md updated (Batch 4 Addendum inserted); DEVLOG appended with this summary.
-- No production code changes in this batch; documentation-only.
-
-### Decisions
-- Enforce fail-closed defaults for policy/RBAC config parsing; provide explicit, clearly-named dev override env for fail-open behavior.
-- Persist budget snapshots minimally (in-memory ring) before full WAL durability; add WAL hook stubs now to de-risk later integration.
-
-### Follow-ups
-- Upon approval, begin implementing PE-6 and BM-1 first (highest leverage, low risk), then proceed to PE-8/PE-9 (RBAC validation/parity) and BM-2 (history endpoints).
-
-### Files
-- Docs/Production-Task-List.md (updated)
-- Docs/DEVLOG.md (this entry)
-
-
-## 2025-10-29T03:45:00Z (UTC)
-
-### Area
-Planning|Docs|Transports (HTTP/gRPC)
-
-### Context / Goal
-Second-pass review of Production Task List Batch 5 (Transport Layer - HTTP/gRPC) aligned to Blueprint requirements: HTTP/gRPC parity (health/tools/run/stream), deterministic trace IDs + traceparent echo, fail-closed auth/policy/RBAC, structured error envelopes, metrics endpoint, optional TLS.
-
-### Actions
-- Reviewed Docs/Blueprint.md transport guidance and Docs/Transport.md for current expectations (traceId, metadata, traceparent echo).
-- Inspected transports/http_adapter.py and transports/grpc_adapter.py for endpoints, error mapping, traceparent handling, metrics, and streaming.
-- Cross-checked tests for metrics endpoint shape and parity coverage; identified missing tests for traceparent echo, optional gRPC fallback, and internal error mapping.
-- Added “Batch 5 — Addendum (Second-pass review on 2025-10-29)” in Docs/Production-Task-List.md with 8 new tasks (TL-6…TL-13) including deterministic acceptance criteria and validation commands.
-
-### Results
-- New tasks added:
-  - TL-6 (traceparent echo + traceId determinism), TL-7 (gRPC optional fallback determinism), TL-8 (HTTP max body size limit), TL-9 (streaming parity policy),
-    TL-10 (internal error mapping consistency), TL-11 (header case-insensitivity tests), TL-12 (optional CORS toggles), TL-13 (HEAD/OPTIONS minimal handling).
-- No production code changes; documentation-only.
-
-### Rationale
-- Ensures transport-level determinism and parity across HTTP/gRPC, fail-closed defaults, and resilience to malformed inputs.
-- Prepares for future TLS enablement and optional features without breaking defaults.
-
-### Files
-- Docs/Production-Task-List.md (Batch 5 addendum inserted)
-- Docs/DEVLOG.md (this entry)
-
-
-## 2025-10-29T04:15:00Z (UTC)
-
-### Area
-Planning|Docs|Observability & Telemetry
-
-### Context / Goal
-Second-pass review of Production Task List Batch 6 (Observability & Telemetry): OTel bridge (optional), span naming/attrs, structured logs, trace context, redaction, sampling/export knobs, and perf overhead budgets.
-
-### Actions
-- Reviewed Docs/Blueprint.md and Docs/Observability.md for telemetry/tracing guidance and attribute allowlists.
-- Inspected obs/tracing.py (deterministic tracer with optional OTel bridge), telemetry/sink.py (toggle + redaction), obs/redaction.py (patterns and field redaction), workflows/workflows.py (span usage), CLI/server logs.
-- Cross-checked existing tests (tests/integration/observability_tracing_test.py) for span determinism; identified gaps in allowlist/redaction, sink toggles, policy audit events, logs `ts`, and perf overhead budget.
-- Added “Batch 6 — Addendum (Second-pass review on 2025-10-29)” in Docs/Production-Task-List.md with 8 new tasks (OB-5…OB-12) including deterministic acceptance criteria and validation commands.
-
-### Results
-- New tasks added:
-  - OB-5 (span naming + coverage), OB-6 (attribute allowlist + redaction), OB-7 (sink toggle determinism), OB-8 (optional OTel bridge knobs/tests),
-    OB-9 (run-level correlation), OB-10 (structured JSON logs with ts), OB-11 (overhead budget microbench), OB-12 (policy audit event parity).
-- No production code changes; documentation-only.
-
-### Rationale
-- Enforces low-cardinality telemetry with redaction, deterministic spans, and explicit budgets; maintains optional OTel integration with safe defaults.
-
-### Files
-- Docs/Production-Task-List.md (Batch 6 addendum inserted)
-- Docs/DEVLOG.md (this entry)
-
-
-
-## 2025-10-29T04:45:00Z (UTC)
-
-### Area
-Planning|Docs|Security & Privacy
-
-### Context / Goal
-Second-pass review of Production Task List Batch 7 (Security & Privacy): fail-closed posture, RBAC checkpoints, secrets redaction, TLS/mTLS guidance, sandbox isolation, audit events, supply chain hygiene, and tenant isolation.
-
-### Actions
-- Reviewed Docs/Blueprint.md (security sections) and .augment/rules/security-privacy.md (authoritative), plus Docs/Transport.md and Docs/Observability.md for related guidance.
-- Inspected orchestrator/security/{rbac.py,policy.py}, transports/{http_adapter.py,grpc_adapter.py}, exec/sandbox.py, cli/orchestrator_cli.py, and .pre-commit-config.yaml.
-- Observed: TLSConfig exists but stdlib HTTP adapter does not support TLS; .pre-commit has only markdownlint; policy.flag audit events exist but deny events not emitted; sandbox Phase 3 hooks present (Linux seccomp, Windows restricted token) but lacking explicit security tests; tenant scoping present in RBAC but not tagged in audit events.
-- Added “Batch 7 — Addendum (Second-pass review on 2025-10-29)” with 8 new tasks (SP-5…SP-12) including deterministic acceptance criteria and validation commands.
-
-### Results
-- New tasks added:
-  - SP-5 (RBAC coverage matrix + negative tests), SP-6 (security.deny audit events), SP-7 (secrets redaction E2E for headers/env), SP-8 (TLS/mTLS knobs + reverse-proxy guidance + deterministic refusal),
-    SP-9 (tamper-evident audit chaining), SP-10 (pre-commit secret scan + CI pip-audit/bandit), SP-11 (sandbox Phase 3 security assertions), SP-12 (tenant tagging in telemetry + cross-tenant deny tests).
-- No production code changes; documentation and task list updates only.
-
-### Rationale
-- Hardens fail-closed posture and defense-in-depth: explicit deny audits, secrets hygiene, supply chain checks, sandbox enforcement tests, tenant isolation visibility, and clear TLS operational guidance.
-
-### Files
-- Docs/Production-Task-List.md (Batch 7 addendum inserted)
-- Docs/DEVLOG.md (this entry)
-
-
-
-## 2025-10-29T05:05:00Z (UTC)
-
-### Area
-Planning|Docs|Testing & CI/CD
-
-### Context / Goal
-Second-pass review of Production Task List Batch 8 (Testing & CI/CD): coverage gates, deterministic testing (PYTHONHASHSEED=0), multi-platform lanes, zero-warnings policy, benchmarks and regression detection, reproducible builds, SBOM/provenance, release artifacts, and test pyramid health.
-
-### Actions
-- Reviewed Docs/Blueprint.md (CI/CD and testing guidance) and existing CI workflows (.github/workflows/ci.yml, release.yml).
-- Inspected pytest configuration (pytest.ini), dev/optional deps (pyproject.toml), tests directory structure, and provenance tooling (scripts/provenance.py).
-- Observed: coverage gates (≥85%) enforced on Linux/Windows; Windows lane present; benches run with absolute thresholds; macOS lacks a test lane; deterministic seeds missing in some jobs; ruff/mypy gates absent; reproducibility check present but not verifying identical SHA256; release.yml exists but SBOM/provenance attachment needs verification.
-- Added “Batch 8 — Addendum (Second-pass review on 2025-10-29)” with 8 new tasks (CI-4…CI-11) including deterministic acceptance criteria and validation commands.
-
-### Results
-- New tasks added:
-  - CI-4 (ruff+mypy gates), CI-5 (deterministic env across jobs), CI-6 (macOS test lane), CI-7 (≤5% bench regression vs baseline),
-    CI-8 (stronger reproducibility check), CI-9 (release SBOM/provenance attachments), CI-10 (Windows slow/fast split), CI-11 (core-path ≥90% coverage guard).
-- No production code changes; documentation and task list updates only.
-
-### Rationale
-- Aligns CI/CD with blueprint and rules: deterministic testing, cross-platform parity, clear lint/type gates, reproducible builds, performance guardrails, and complete release artifacts.
-
-### Files
-- Docs/Production-Task-List.md (Batch 8 addendum inserted)
-- Docs/DEVLOG.md (this entry)
-
-
-
-## 2025-10-29T05:30:00Z (UTC)
-
-### Area
-Planning|Docs|Packaging & Release
-
-### Context / Goal
-Second-pass review of Production Task List Batch 9 (Packaging & Release): wheels/SDist reproducibility, SBOM/provenance, artifact signing/attestation, CHANGELOG/release notes automation, versioning and deprecation policy, release automation to GitHub and optional PyPI, rollback/runbook.
-
-### Actions
-- Reviewed blueprint packaging/release guidance and existing assets: pyproject.toml, release.yml, scripts/repro_check.py, scripts/provenance.py, CHANGELOG.md, README.md, Docs/Deployment.md.
-- Observed: GitHub Release workflow builds artifacts and attaches SBOM + provenance; reproducibility script verifies identical SHA256; no PyPI publish; no signing/SLSA; license metadata mismatch (pyproject vs classifiers); versioning/deprecation policy not formalized; release notes automation not enforced; no rollback runbook.
-- Added “Batch 9 — Addendum (Second-pass review on 2025-10-29)” with 8 new tasks (PR-3…PR-10) and deterministic acceptance/validation.
-
-### Results
-- New tasks added:
-  - PR-3 (license metadata alignment), PR-4 (optional PyPI/TestPyPI publish), PR-5 (release notes + CHANGELOG gate), PR-6 (SLSA + cosign optional),
-    PR-7 (install/verify guidance + checksum), PR-8 (versioning & deprecation policy), PR-9 (version bump helper + tag check), PR-10 (release rollback/runbook).
-- Documentation-only updates; no production code changes in this pass.
-
-### Rationale
-- Completes Packaging & Release readiness per blueprint/rules: provenance+SBOM, deterministic reproducibility, clear versioning/upgrade guidance, optional distribution/signing, and rollback safety.
-
-### Files
-- Docs/Production-Task-List.md (Batch 9 addendum inserted)
-- Docs/DEVLOG.md (this entry)
-## 2025-10-29T18:44:09Z — Performance P0: HTTP adapter fast-path & caches
-- Changed orchestrator/transports/http_adapter.py:
-  - Added deterministic server-level caches for policy rules (VLTAIR_POLICY_RULES) and RBAC grants (VLTAIR_RBAC_GRANTS) with TTL (VLTAIR_POLICY_CACHE_TTL, default 5s) and a _refresh_caches_for_tests() hook.
-  - Built a single lowercase headers map per request (_headers_lower) and reused across policy/RBAC checks and policy evaluation.
-  - Decoded request bodies once and reused the decoded text for policy evaluation and JSON parsing in POST handlers (/v1/tools/register, /v1/agent/run).
-  - Switched JSON responses to compact separators and UTF-8 (json.dumps(..., separators=(",", ":"), ensure_ascii=False)).
-  - Centralized metric keys as constants to minimize string allocations.
-- Determinism: Preserved traceparent echo and traceId generation; response fields unchanged.
-- Gates: VLTAIR_POLICY_CACHE_TTL controls cache TTL; _refresh_caches_for_tests() for deterministic test refresh.
-- Validation: Ran targeted smoke locally; parity checks on GET/POST endpoints; no API shape changes.
-- Next: gRPC adapter reuse and caching (P0), Sandbox stream drain optimization (P0).
-## 2025-10-29T18:46:28Z — Performance P0: gRPC adapter reuse + caches
-- Changed orchestrator/transports/grpc_adapter.py (gRPC lane):
-  - Reused a single Orchestrator instance inside _AgentService (fallback to lazy import if construction fails).
-  - Added deterministic caches for policy rules (VLTAIR_POLICY_RULES) and RBAC grants (VLTAIR_RBAC_GRANTS) with TTL (VLTAIR_POLICY_CACHE_TTL); _refresh_caches_for_tests() added.
-  - Updated RBAC check to use cached grants and include x-tenant header for tenant scoping.
-  - Single-pass body handling: decode request bytes once → text; reuse for policy evaluate and JSON parsing in RunAgent and RunAgentStream.
-  - Retained compact JSON serialization in _json_dumps for responses.
-- Determinism: Decisions and trace IDs unchanged; metadata echo preserved.
-- Validation: gRPC parity tests expected to pass when grpc/stubs present; local smoke verified handlers import.
-- Next: Sandbox stream drain optimization (P0).
-## 2025-10-29T18:48:51Z — Performance P0: Sandbox stream drain optimization
-## 2025-10-29T06:45:00Z (UTC)
-
-### Area
-Planning|Docs|Testing & CI|Security|Release
-
-### Context / Goal
-Reflective third-pass review of the Production Task List (Batches 1–9) with feature gap analysis, cross-batch integration, and alignment to Blueprint end goals. Update Docs/Production-Task-List.md accordingly and confirm readiness to proceed.
-
-### Actions
-- Reviewed Blueprint end goals and E2E acceptance criteria; confirmed determinism, WAL/snapshot, replay, and dogfooding requirements.
-- Updated Docs/Production-Task-List.md with third-pass addendums:
-  - Batch 7 (Security & Privacy): SP-13..SP-16 (crash-path secret redaction, policy/RBAC schema versioning, audit retention+retrieval, provenance verifier helper)
-  - Batch 8 (Testing & CI/CD): CI-12..CI-15 (locale determinism, packaging smoke, cache key correctness, coverage merge sanity)
-  - Batch 9 (Packaging & Release): confirmed PR-3..PR-10 from second-pass; no further third-pass tasks required beyond cross-batch items
-  - Cross-Batch Integration: XB-1..XB-4 (E2E acceptance workflow, deterministic replay CLI, dogfooding workflow, ADR index + traceability)
-
-### Results
-- Production-Task-List.md now includes reflective third-pass addendums for Batches 7–9 and a Cross-Batch section; all new tasks have deterministic acceptance criteria and validation commands.
-- Identified and documented integration pathways for deterministic replay and E2E demo in CI.
-
-### Decisions
-- Keep gRPC signing/SLSA optional and secrets-gated.
-- Fail-closed on policy/RBAC schema version mismatches to avoid silent allow.
-- Prefer stdlib-first CI checks (build/install smoke) to catch packaging issues without new dependencies.
-
-### Follow-ups
-- Prioritize XB-1 (E2E acceptance) and OC-14/OC-17 (replay + rollback) to unlock cross-batch validation.
-- Address markdown lints (MD024/MD058) in Docs/Production-Task-List.md in a dedicated docs-formatting pass.
-
-### Files
-- Docs/Production-Task-List.md (modified)
-- Docs/DEVLOG.md (this entry)
-
-- Changed exec/sandbox.py:
-  - Optimized _read_stream_limited with adaptive chunking, memoryview-backed extends, and a larger drain chunk after the limit to reduce syscall/CPU overhead while preserving the deterministic truncation marker [TRUNCATED at N bytes].
-  - Kept watchdog + timeout mapping semantics unchanged (TIMEOUT → rc=124) and existing CI diagnostics gating.
-- Determinism: Output marker and decoding unchanged; identical caps.
-- Validation: Local smoke with large stdout/stderr caps; existing timeout tests expected to remain green.
-- Next: Orchestrator result batching and stable IDs (P0) or proceed with Scheduler monotonic/priority queue tasks per plan.
-## 2025-10-29T18:53:09Z — Sandbox: enforce_network implementation
-- Changed exec/sandbox.py:
-  - Implemented SandboxPolicy.enforce_network:
-    - Linux: Enforces network isolation via seccomp-bpf filter (libseccomp) blocking network syscalls; applied regardless of VLTAIR_SANDBOX_ENABLE_SECCOMP when enforce_network=True.
-    - Non-Linux (Windows/macOS): Marked unsupported; when llow_partial=False, returns INTERNAL_ERROR with deterministic reason.
-  - Added enforced["network"] summary (
-equested, pplied,
-eason) and included enforce_network in start diagnostics.
-  - Preserved existing Phase 3 behavior; combines with other preexec functions via _compose_preexec.
-- Determinism: Fails closed when required enforcement unavailable and llow_partial=False.
-- Validation: Local smoke; existing tests should pass; follow-up tests recommended to assert SANDBOX_DENIED/unsupported paths.
-## 2025-10-29T19:10:42Z — Performance P0: Orchestrator result batching + stable IDs
-- Changed orchestrator/core/orchestrator.py:
-  - Added stable ID helper using blake2s (32-bit int) and replaced Python hash() usage for document IDs across delta.doc and artifacts.
-  - Batched ContextStore writes per type (code/text/test/diff/coverage) and cached ctx = _ensure_ctx() to reduce call overhead.
-  - Precomputed origin once; reduced repeated imports by hoisting model imports to module scope.
-  - Finalized BudgetManager lifecycle on successful result application (optional inish_workflow() call; removed from _budgets).
-- Determinism: IDs are stable across runs; payload shapes unchanged.
-- Validation: Unit tests expected to remain green; follow-up micro-bench recommended for artifact-heavy results.
-- Next: Scheduler monotonic/priority queue improvements (P0) per plan.
-## 2025-10-29T19:14:18Z — Performance P0: Scheduler monotonic timing + priority queue fairness
-- Changed orchestrator/core/scheduler.py:
-  - Replaced FIFO queue.Queue with a heap-based priority queue keyed by
-ext_at (monotonic seconds) and a sequence number to ensure deterministic tie-breaks.
-  - Switched to 	ime.monotonic() for scheduling and deadlines; introduced absolute deadline across retries when udget_ms provided.
-  - Added condition variable to wait efficiently until items are due; named worker threads for observability.
-  - Implemented clean shutdown via sentinel items; metrics() now reports heap size (excluding sentinels).
-- Determinism: Fair, deadline-aware scheduling; no behavioral regressions expected.
-- Validation: Existing scheduler tests should pass; follow-up tests recommended for deadline enforcement and fairness.
-## 2025-10-29T19:19:51Z — Performance P0: Validators dispatch + Telemetry sink bounds
-- Changed orchestrator/schemas/validators.py:
-  - Implemented payload validator dispatch map by (agent, mode) and a compatibility _parse_model wrapper that uses model_validate on Pydantic v2 or falls back to constructor, reducing branching and preserving error behavior.
-- Changed orchestrator/telemetry/sink.py:
-  - InMemoryTelemetrySink now uses a bounded deque(maxlen=VLTAIR_TELEMETRY_MAX, default 10000) with a lock for thread-safety; global sink creation cached deterministically.
-- Determinism: Validation outcomes and telemetry semantics unchanged.
-- Validation: Unit tests expected to remain green; follow-up sink tests recommended for concurrency and bounds.
-
-
-## 2025-10-29T00:00:00Z (UTC)
-
-### Area
-Docs|E2E|Orchestrator Core (WAL)|CLI|CI
-
-### Context / Goal
-Batch: Documentation Formatting + Implementation (XB-1, OC-14, OC-17).
-- Fix MD024/MD058 in Docs/Production-Task-List.md (duplicate headings; blanks around tables)
-- Implement minimal E2E acceptance (feature-add workflow)
-- Provide deterministic WAL replay helpers and cancellation/rollback semantics with tests
-- Add CLI replay command and CI e2e job
-
-### Actions
-- Docs: Resolved MD024 by suffixing headings with batch numbers; ensured MD058 by adding blank lines before/after all tables in Docs/Production-Task-List.md.
-- WAL: Added orchestrator/wal/{events.py,writer.py,replay.py} with JSONL schema, stable seq/ts ordering, append_event(), replay_run(), record_cancellation(), rollback_to_snapshot().
-- CLI: Added `orchestrator replay --run-id <id> [--wal-dir <dir>]` printing deterministic event list.
-- Tests: Added tests/unit/wal_replay_test.py::test_replay_determinism and tests/unit/orchestrator_rollback_test.py::test_deterministic_cancellation (≥85% coverage for new modules).
-- E2E: Added tests/e2e/feature_add_workflow_test.py::test_end_to_end_minimal exercising run_feature_add() deterministically in a tmp repo.
-- CI: Added `e2e-acceptance` job to .github/workflows/ci.yml with PYTHONHASHSEED=0, TZ=UTC, LC_ALL/LANG=C.UTF-8 and coverage gate ≥85%.
-
-### Results
-- Markdown lint: MD024/MD058 clean for Docs/Production-Task-List.md (spot-checked all 9 batches).
-- Unit: PYTHONHASHSEED=0 python -m pytest -q tests/unit/wal_replay_test.py tests/unit/orchestrator_rollback_test.py -> pass.
-- E2E: PYTHONHASHSEED=0 TZ=UTC LC_ALL=C.UTF-8 python -m pytest -q tests/e2e/feature_add_workflow_test.py::test_end_to_end_minimal -> pass.
-- Coverage: New code paths in orchestrator/wal/* exercised by unit tests; overall job gates keep ≥85%.
-
-### Decisions
-- Keep WAL helpers lightweight and stdlib-only; integrate deeper WAL hooks into Orchestrator in a follow-up to avoid scope creep.
-- CLI replay returns recorded events deterministically; full state reconstruction to be added with OC-14 follow-up tasks.
-
-### Follow-ups
-- Orchestrator integration: emit WAL events on submit/apply paths; snapshot/restore surfaces (OC-14/OC-17 deeper integration).
-- Extend E2E to assert time/token budgets explicitly via BudgetManager snapshots once WAL hooks are wired.
-
-### Files
-- Docs/Production-Task-List.md (formatting only)
-- cli/orchestrator_cli.py (replay subcommand)
-- orchestrator/wal/{__init__.py,events.py,writer.py,replay.py} (new)
-- tests/unit/{wal_replay_test.py, orchestrator_rollback_test.py} (new)
-- tests/e2e/feature_add_workflow_test.py (new)
-- .github/workflows/ci.yml (new e2e job)
