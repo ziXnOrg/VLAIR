@@ -2,8 +2,11 @@ from __future__ import annotations
 
 from typing import Any, Dict, Optional, cast
 import time
+import threading
+import hashlib
 
 from orchestrator.schemas.validators import validate_agent_task, validate_agent_result
+from orchestrator.wal.writer import append_event as _wal_append_event
 from .scheduler import Scheduler, ScheduledTask
 from .registry import AgentRegistry
 from orchestrator.agents.codegen import CodeGenAgent
@@ -16,13 +19,13 @@ from orchestrator.obs.redaction import sanitize_text, sanitize_artifact
 
 
 class Orchestrator:
-  def __init__(self) -> None:
+  def __init__(self, *, run_id: Optional[str] = None, wal_dir: Optional[str] = None) -> None:
     self._registry = AgentRegistry()
     # seed default agents for routing demo
-    self._registry.register("CodeGenAgent", ["codegen"]) 
-    self._registry.register("TestAgent", ["testgen", "testexec"]) 
-    self._registry.register("StaticAnalysisAgent", ["analysis"]) 
-    self._registry.register("DebugAgent", ["debug"]) 
+    self._registry.register("CodeGenAgent", ["codegen"])
+    self._registry.register("TestAgent", ["testgen", "testexec"])
+    self._registry.register("StaticAnalysisAgent", ["analysis"])
+    self._registry.register("DebugAgent", ["debug"])
     self._agent_handlers: Dict[str, Any] = {
       "CodeGenAgent": CodeGenAgent().run,
       "TestAgent": TestAgent().run,
@@ -32,6 +35,13 @@ class Orchestrator:
     self._scheduler = Scheduler(max_concurrency=2)
     self._scheduler.start(self._handle_scheduled, router=self._route_agent)
     self._ctx: Optional[ContextStore] = None
+    # --- WAL configuration/state ---
+    self._wal_dir: Optional[str] = wal_dir
+    # Short, deterministic-ish run id when not provided
+    self._run_id: str = run_id or hashlib.sha1(f"{time.time_ns()}|{id(self)}".encode("utf-8")).hexdigest()[:16]
+    self._wal_lock = threading.Lock()
+    self._last_seq: int = 0
+    self._applied_count: int = 0
 
   def submit_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
     # Validate schema first; raises ValueError on failure
@@ -42,6 +52,8 @@ class Orchestrator:
     if c and c.timeoutMs is not None:
       budget_ms = int(c.timeoutMs)
     trace_id = self._scheduler.enqueue(task, max_attempts=max_attempts, budget_ms=budget_ms)
+    # WAL: task.accepted (fail-open)
+    self._wal_emit("task.accepted", {"taskId": validated.id, "agent": validated.agent, "traceId": trace_id})
     return {"accepted": True, "taskId": validated.id, "agent": validated.agent, "traceId": trace_id}
 
   def handle_result(self, result: Dict[str, Any]) -> Dict[str, Any]:
@@ -49,18 +61,26 @@ class Orchestrator:
     return {"ok": True, "resultId": validated.id, "agent": validated.agent}
 
   def _handle_scheduled(self, item: ScheduledTask) -> None:
-    # Placeholder dispatch; in Task 11 we would route to agents by type
-    # For now we only validate again to simulate guarded processing
+    # Placeholder dispatch with WAL hooks and guarded processing
     try:
       validate_agent_task(item.task)
       agent = item.agent or self._route_agent(item.task)
+      # WAL: task.started
+      self._wal_emit("task.started", {"taskId": str(item.task.get("id", "")), "agent": agent, "traceId": item.trace_id})
       handler = self._agent_handlers.get(agent, self._handle_noop)
       result: Dict[str, Any] = handler(item.task)
       # Validate and accept AgentResult shape
       if result.get("type") == "AgentResult":
         validate_agent_result(result)
         self.apply_agent_result(result)
+        # internal accounting + WAL
+        self._applied_count = int(getattr(self, "_applied_count", 0)) + 1
+        self._wal_emit("result.applied", {"resultId": str(result.get("id", "")), "agent": str(result.get("agent", "")), "traceId": item.trace_id})
+      # WAL: task.completed (even when no explicit AgentResult)
+      self._wal_emit("task.completed", {"taskId": str(item.task.get("id", "")), "agent": agent, "traceId": item.trace_id})
     except Exception as e:
+      # WAL: task.cancelled on error
+      self._wal_emit("task.cancelled", {"taskId": str(item.task.get("id", "")), "reason": str(e), "traceId": item.trace_id})
       # Surface validation with trace ID
       raise ValueError(f"traceId={item.trace_id} validation failed: {e}")
 
@@ -72,6 +92,19 @@ class Orchestrator:
         raise ValueError(f"Requested agent '{agent}' not available")
       return agent
     return self._registry.select_for("")
+
+  def _wal_emit(self, event_type: str, payload: Dict[str, Any]) -> None:
+    """Append a WAL event; never raises (fail-open for WAL I/O)."""
+    try:
+      with self._wal_lock:
+        ev = _wal_append_event(self._run_id, event_type, payload, wal_dir=self._wal_dir)
+        try:
+          self._last_seq = int(ev.get("seq", self._last_seq) or self._last_seq)
+        except Exception:
+          pass
+    except Exception:
+      # fail-open: swallow I/O errors
+      pass
 
   # --- Agent registry operations ---
   def register_agent(self, name: str, capabilities: list[str]) -> None:
@@ -217,3 +250,20 @@ class Orchestrator:
           self._ensure_ctx().add_text_documents([text_doc], [[0.0]])
           cov_doc = CoverageHintDocument(id=doc_id, files=files_val, line_rate=rate, metadata={"origin": str(result.get("agent", ""))})
           self._ensure_ctx().add_coverage_hints([cov_doc])
+
+  def snapshot(self, ts_ms: Optional[int] = None) -> Dict[str, Any]:
+    """Return a deterministic snapshot stub for OC-12.
+
+    State is intentionally minimal until full event-sourced context is wired.
+    """
+    ts = int(ts_ms if ts_ms is not None else int(time.time() * 1000))
+    try:
+      q = int(self.queue_metrics().get("queued", 0))
+    except Exception:
+      q = 0
+    state = {
+      "tasks": {"queued": q},
+      "results": {"applied_count": int(getattr(self, "_applied_count", 0))},
+      "context_version": 0,
+    }
+    return {"run_id": self._run_id, "seq": int(getattr(self, "_last_seq", 0)), "ts": ts, "state": state}
